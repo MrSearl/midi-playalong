@@ -1,0 +1,178 @@
+:root {
+  --bg: #fafafa;
+  --fg: #222;
+  --accent: #2a7cff;
+  --subtle: #e9eef6;
+  --key-blue: #0070ff;
+  --key-green: #23a55a;
+  --key-red: #d33;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+}
+
+header {
+  background: #333;
+  color: #fff;
+  padding: 12px 16px;
+}
+
+h1 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 20px;
+}
+
+main {
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.controls {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+  margin-bottom: 12px;
+}
+
+.buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button {
+  appearance: none;
+  border: 1px solid #ccc;
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button#modeBtn {
+  background: var(--accent);
+  color: #fff;
+  border-color: transparent;
+}
+button#stopBtn {
+  background: #f4f4f4;
+}
+
+.faders {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.faders label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.faders input[type="range"] {
+  width: 220px;
+}
+
+.status {
+  padding: 8px 12px;
+  background: var(--subtle);
+  border: 1px solid #d6dde7;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.notation {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 12px;
+  overflow: auto;
+}
+
+/* -------- Keyboard -------- */
+.keyboard-wrap {
+  margin-top: 16px;
+}
+.keyboard-wrap h3 {
+  margin: 8px 0;
+}
+
+.keyboard {
+  position: relative;
+  display: flex;
+  padding: 8px 6px 12px;
+  gap: 0;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+/* layout container for each white key so we can position its sharps */
+.key-group {
+  position: relative;
+}
+
+.white-key,
+.black-key {
+  border: 1px solid #444;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: filter 120ms ease, background-color 200ms ease;
+  user-select: none;
+}
+
+.white-key {
+  width: 40px;
+  height: 200px;
+  background: #ffffff;
+  z-index: 1;
+  border-radius: 0 0 6px 6px;
+  margin-right: 2px;
+}
+
+.black-key {
+  position: absolute;
+  left: 28px; /* adjusted during creation */
+  top: 0;
+  width: 26px;
+  height: 120px;
+  background: #000000;
+  z-index: 2;
+  border-radius: 0 0 6px 6px;
+  border-color: #000;
+}
+
+/* Highlights */
+.highlight-blue {
+  background-color: var(--key-blue) !important;
+}
+.highlight-green {
+  background-color: var(--key-green) !important;
+}
+.highlight-red {
+  background-color: var(--key-red) !important;
+}
+
+/* pressed look */
+.white-key.active {
+  filter: brightness(0.9);
+}
+.black-key.active {
+  filter: brightness(1.2);
+}

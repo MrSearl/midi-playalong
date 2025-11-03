@@ -1,0 +1,42 @@
+body {
+  background: #f4f4f4;
+  margin: 0;
+  padding: 20px;
+  font-family: Segoe UI, Roboto, sans-serif;
+}
+
+h2 {
+  text-align: center;
+}
+
+#music {
+  background: #fff;
+  border: 1px solid #ccc;
+  width: 90%;
+  margin: 20px auto;
+  padding: 10px;
+}
+
+#controls {
+  text-align: center;
+}
+
+button {
+  color: #fff;
+  cursor: pointer;
+  background: #3f51b5;
+  border: none;
+  border-radius: 5px;
+  margin: 5px;
+  padding: 10px 20px;
+}
+
+button:hover {
+  background: #2c3a8c;
+}
+
+#status {
+  text-align: center;
+  margin-top: 10px;
+}
+/*# sourceMappingURL=midi-playalong.2cdaf7bc.css.map */

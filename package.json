@@ -1,0 +1,19 @@
+{
+  "name": "midi-playalong",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "parcel index.html",
+    "build": "parcel build index.html"
+  },
+  "dependencies": {
+    "tone": "^14.9.17"
+  },
+  "devDependencies": {
+    "@parcel/packager-xml": "^2.16.0",
+    "@parcel/transformer-xml": "^2.16.0",
+    "buffer": "^6.0.3",
+    "parcel": "^2.12.0",
+    "process": "^0.11.10"
+  }
+}
