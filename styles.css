@@ -1,0 +1,263 @@
+:root {
+  --bg: #fafafa;
+  --fg: #222;
+  --accent: #2a7cff;
+  --subtle: #e9eef6;
+  --key-blue: #0070ff;
+  --key-green: #23a55a;
+  --key-red: #d33;
+}
+
+/* ---------- Base ---------- */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+}
+
+header {
+  background: #333;
+  color: #fff;
+  padding: 12px 16px;
+}
+
+h1 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 20px;
+}
+
+main {
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ---------- Controls ---------- */
+.controls {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+  margin-bottom: 12px;
+}
+
+.buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button {
+  appearance: none;
+  border: 1px solid #ccc;
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button#modeBtn {
+  background: var(--accent);
+  color: #fff;
+  border-color: transparent;
+}
+button#stopBtn {
+  background: #f4f4f4;
+}
+
+.faders {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.faders label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.faders input[type="range"] {
+  width: 220px;
+}
+
+.status {
+  padding: 8px 12px;
+  background: var(--subtle);
+  border: 1px solid #d6dde7;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* ---------- Notation ---------- */
+.notation {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 12px;
+  overflow: auto;
+}
+
+/* ---------- Keyboard ---------- */
+.keyboard-wrap {
+  margin-top: 16px;
+}
+.keyboard-wrap h3 {
+  margin: 8px 0;
+}
+
+.keyboard {
+  position: relative;
+  display: flex;
+  padding: 8px 6px 12px;
+  gap: 0;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.key-group {
+  position: relative;
+}
+
+.white-key,
+.black-key {
+  border: 1px solid #444;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: filter 120ms ease, background-color 200ms ease;
+  user-select: none;
+}
+
+.white-key {
+  width: 40px;
+  height: 200px;
+  background: #ffffff;
+  z-index: 1;
+  border-radius: 0 0 6px 6px;
+  margin-right: 2px;
+}
+
+.black-key {
+  position: absolute;
+  left: 28px;
+  top: 0;
+  width: 26px;
+  height: 120px;
+  background: #000000;
+  z-index: 2;
+  border-radius: 0 0 6px 6px;
+  border-color: #000;
+}
+
+/* Highlights */
+.highlight-blue {
+  background-color: var(--key-blue) !important;
+}
+.highlight-green {
+  background-color: var(--key-green) !important;
+}
+.highlight-red {
+  background-color: var(--key-red) !important;
+}
+
+/* Pressed key look */
+.white-key.active {
+  filter: brightness(0.9);
+}
+.black-key.active {
+  filter: brightness(1.2);
+}
+
+/* -------- Side-by-Side Layout (fixed overlap issue) -------- */
+.notation-keyboard {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+/* Let notation take most of the width and expand naturally */
+.notation {
+  flex: 1 1 auto;
+  min-width: 0; /* prevents flex overflow */
+}
+
+/* Keyboard column stays to the right and scrolls independently if needed */
+.keyboard-wrap {
+  flex: 0 0 340px; /* fixed width to prevent overlap */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: sticky;
+  top: 12px; /* stays visible when scrolling */
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Make sure keyboard fits within its column */
+.keyboard {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Responsive stacking for small screens */
+@media (max-width: 900px) {
+  .notation-keyboard {
+    flex-direction: column;
+  }
+  .notation,
+  .keyboard-wrap {
+    width: 100%;
+    max-width: 100%;
+    position: static;
+  }
+}
+
+
+/* ---------- OSMD Note Highlighting ---------- */
+
+/* Default OSMD noteheads */
+.vf-notehead path {
+  fill: black;
+  transition: fill 0.25s ease-in-out;
+}
+
+/* Default stavenote elements (noteheads, stems, flags, ledger lines) */
+.vf-stavenote path,
+.vf-stavenote line,
+.vf-stavenote rect,
+.vf-stem path {
+  fill: #000;
+  stroke: #000;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+/* Highlighted single notehead (legacy support) */
+.vf-notehead path.highlighted {
+  fill: dodgerblue !important;
+}
+
+/* Highlighted full note (head, stem, flags, dots, ledger lines) */
+.vf-stavenote.lit path,
+.vf-stavenote.lit line,
+.vf-stavenote.lit rect,
+.vf-stem.lit path {
+  fill: dodgerblue !important;
+  stroke: dodgerblue !important;
+}

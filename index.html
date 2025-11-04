@@ -2,13 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Midi Playalong</title>
+    <title>MIDI Playalong</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- Tone.js (UMD build) -->
     <script src="https://cdn.jsdelivr.net/npm/tone@14.9.17/build/Tone.js"></script>
     <!-- OpenSheetMusicDisplay (UMD build) -->
     <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay/build/opensheetmusicdisplay.min.js"></script>
-    <link rel="stylesheet" href="./src/styles.css>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header>
@@ -18,51 +18,40 @@
     <main>
       <section class="controls">
         <div class="buttons">
-          <button id="modeBtn" title="Toggle practice / playback">
+          <!-- <button id="modeBtn" title="Toggle practice / playback">
             Practice Mode
-          </button>
+          </button> -->
           <button id="playBtn" disabled>Play</button>
           <button id="stopBtn">Stop</button>
         </div>
 
         <div class="faders">
           <label>
-            Piano (MIDI) Vol
-            <input
-              id="pianoVol"
-              type="range"
-              min="-60"
-              max="6"
-              value="-6"
-              step="1"
-            />
+            🎹 Piano Volume
+            <input id="pianoVol" type="range" min="0" max="1" step="0.01" value="0.5" />
           </label>
           <label>
-            Guitar (Track) Vol
-            <input
-              id="guitarVol"
-              type="range"
-              min="-60"
-              max="6"
-              value="-6"
-              step="1"
-            />
+            🎸 Guitar Volume
+            <input id="guitarVol" type="range" min="0" max="1" step="0.01" value="0.8" />
           </label>
         </div>
 
         <div id="status" class="status">Loading…</div>
       </section>
 
-      <section class="notation">
-        <div id="music"></div>
-      </section>
+      <!-- NEW side-by-side layout -->
+      <div class="notation-keyboard">
+        <section class="notation">
+          <div id="music"></div>
+        </section>
 
-      <section class="keyboard-wrap">
-        <h3>Keyboard</h3>
-        <div id="keyboard" class="keyboard"></div>
-      </section>
+        <section class="keyboard-wrap">
+          <h3>Keyboard</h3>
+          <div id="keyboard" class="keyboard"></div>
+        </section>
+      </div>
     </main>
 
-    <script src="./src/script.js"></script>
+    <script src="script.js"></script>
   </body>
 </html>
