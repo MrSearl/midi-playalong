@@ -8,47 +8,65 @@
     <script src="https://cdn.jsdelivr.net/npm/tone@14.9.17/build/Tone.js"></script>
     <!-- OpenSheetMusicDisplay (UMD build) -->
     <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay/build/opensheetmusicdisplay.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header>
-      <h1>🎼 MIDI Playalong</h1>
+      <h1>Keyboard Practice</h1>
     </header>
 
     <main>
-      <section class="controls">
-        <div class="buttons">
-          <!-- <button id="modeBtn" title="Toggle practice / playback">
-            Practice Mode
-          </button> -->
-          <button id="playBtn" disabled>Play</button>
-          <button id="stopBtn">Stop</button>
-        </div>
+<div class="playback-controls">
+  <div class="row top-row">
+    <div class="buttons-group">
+      <button id="playBtn">▶ Play</button>
+      <button id="stopBtn">⏹ Stop</button>
 
-        <div class="faders">
-          <label>
-            🎹 Piano Volume
-            <input id="pianoVol" type="range" min="0" max="1" step="0.01" value="0.5" />
-          </label>
-          <label>
-            🎸 Guitar Volume
-            <input id="guitarVol" type="range" min="0" max="1" step="0.01" value="0.8" />
-          </label>
-        </div>
+      <label class="loop-group">
+        <input type="checkbox" id="loopEnabled"> Loop
+      </label>
 
-        <div id="status" class="status">Loading…</div>
+      <label>
+        Start bar:
+        <select id="loopStart"></select>
+      </label>
+      <label>
+        End bar:
+        <select id="loopEnd"></select>
+      </label>
+    </div>
+
+    <div class="tempo-display">
+      <span id="tempoValue">120 BPM</span>
+      <input type="range" id="tempoSlider" min="40" max="200" value="120">
+    </div>
+  </div>
+
+  <div class="row bottom-row">
+    <label>
+      🎹 Piano Volume
+      <input id="pianoVol" type="range" min="0" max="1" step="0.01" value="0.5" />
+    </label>
+    <label>
+      🎸 Guitar Volume
+      <input id="guitarVol" type="range" min="0" max="1" step="0.01" value="0.8" />
+    </label>
+  </div>
+</div>
+
+
+
+<div id="status" class="status">Loading…</div>
       </section>
 
       <!-- NEW side-by-side layout -->
-      <div class="notation-keyboard">
-        <section class="notation">
-          <div id="music"></div>
-        </section>
+<div class="notation-keyboard">
+  <div class="notation" id="music"></div>
+  <div class="keyboard" id="keyboard"></div>
+</div>
 
-        <section class="keyboard-wrap">
-          <h3>Keyboard</h3>
-          <div id="keyboard" class="keyboard"></div>
-        </section>
       </div>
     </main>
 

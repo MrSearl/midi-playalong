@@ -9,13 +9,11 @@
 }
 
 /* ---------- Base ---------- */
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Roboto", sans-serif;
   color: var(--fg);
   background: var(--bg);
 }
@@ -28,8 +26,9 @@ header {
 
 h1 {
   margin: 0;
-  font-weight: 600;
-  font-size: 20px;
+  font-weight: 400;
+  font-size: 30px;
+  text-align: center;
 }
 
 main {
@@ -38,207 +37,184 @@ main {
   margin: 0 auto;
 }
 
-/* ---------- Controls ---------- */
-.controls {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: 1fr;
-  margin-bottom: 12px;
-}
-
-.buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-button {
-  appearance: none;
-  border: 1px solid #ccc;
-  background: #fff;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-}
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-button#modeBtn {
-  background: var(--accent);
-  color: #fff;
-  border-color: transparent;
-}
-button#stopBtn {
-  background: #f4f4f4;
-}
-
-.faders {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.faders label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-}
-.faders input[type="range"] {
-  width: 220px;
-}
-
+/* ---------- Status ---------- */
 .status {
   padding: 8px 12px;
   background: var(--subtle);
   border: 1px solid #d6dde7;
   border-radius: 8px;
   font-size: 14px;
+  margin-bottom: 12px;
 }
 
-/* ---------- Notation ---------- */
+/* ---------- Simplified Playback Controls ---------- */
+/* ---------- Simplified Playback Controls ---------- */
+.playback-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--subtle);
+  border: 1px solid #d6dde7;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  color: #222;
+    margin-bottom: 12px;
+
+}
+
+/* Common row layout */
+.playback-controls .row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* ← changed from center to left-align */
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+
+/* ---------- Buttons ---------- */
+.playback-controls button {
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+.playback-controls button:hover:not(:disabled) {
+  border: 2px solid #666; /* subtle hover emphasis */
+}
+
+/* Play/Stop colours */
+#playBtn.playing {
+  background: var(--key-green);
+  color: #fff;
+  border-color: var(--key-green);
+}
+
+#stopBtn:active {
+  background: var(--key-red);
+  color: #fff;
+  border-color: var(--key-red);
+}
+
+/* Loop toggle button */
+#loopBtn.loop-off {
+  background: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+}
+#loopBtn.loop-on {
+  background: var(--key-green);
+  color: #fff;
+  border: 1px solid var(--key-green);
+}
+
+/* ---------- Volume Row ---------- */
+.volume-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+}
+.volume-row input[type="range"] {
+  width: 200px;
+}
+
+/* ---------- Tempo Row ---------- */
+.tempo-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+#tempoValue {
+  font-weight: 500;
+}
+#tempoSlider {
+  width: 220px;
+}
+
+/* ---------- Notation + Keyboard ---------- */
 .notation {
   background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  padding: 12px;
-  overflow: auto;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-/* ---------- Keyboard ---------- */
-.keyboard-wrap {
-  margin-top: 16px;
-}
-.keyboard-wrap h3 {
-  margin: 8px 0;
-}
-
-.keyboard {
+.keyboard,
+#keyboard {
   position: relative;
   display: flex;
-  padding: 8px 6px 12px;
-  gap: 0;
+  align-items: flex-end;
   background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  padding: 8px 6px 12px;
   overflow-x: auto;
-}
-
-.key-group {
-  position: relative;
-}
-
-.white-key,
-.black-key {
-  border: 1px solid #444;
-  box-sizing: border-box;
-  cursor: pointer;
-  transition: filter 120ms ease, background-color 200ms ease;
   user-select: none;
 }
 
-.white-key {
-  width: 40px;
-  height: 200px;
-  background: #ffffff;
-  z-index: 1;
-  border-radius: 0 0 6px 6px;
-  margin-right: 2px;
-}
+/* ---------- Keyboard Layout ---------- */
+.key-group { position: relative; display: inline-block; }
 
+.white-key {
+  position: relative;
+  width: 40px;
+  height: 180px;
+  background: white;
+  border: 1px solid #aaa;
+  margin: 0 1px;
+  border-radius: 0 0 6px 6px;
+  z-index: 1;
+}
 .black-key {
   position: absolute;
-  left: 28px;
   top: 0;
-  width: 26px;
-  height: 120px;
-  background: #000000;
-  z-index: 2;
-  border-radius: 0 0 6px 6px;
-  border-color: #000;
+  left: 28px;
+  width: 24px;
+  height: 110px;
+  background: black;
+  border: 1px solid #000;
+  border-radius: 0 0 3px 3px;
+  z-index: 3;
+  pointer-events: none;
 }
 
-/* Highlights */
-.highlight-blue {
-  background-color: var(--key-blue) !important;
+.key-label {
+  position: absolute;
+  bottom: 4px;
+  width: 100%;
+  text-align: center;
+  font-size: 0.7rem;
+  pointer-events: none;
+  color: #333;
 }
-.highlight-green {
-  background-color: var(--key-green) !important;
-}
-.highlight-red {
-  background-color: var(--key-red) !important;
-}
-
-/* Pressed key look */
-.white-key.active {
-  filter: brightness(0.9);
-}
-.black-key.active {
-  filter: brightness(1.2);
+.black-label {
+  color: #fff;
+  font-size: 0.6rem;
 }
 
-/* -------- Side-by-Side Layout (fixed overlap issue) -------- */
-.notation-keyboard {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-  margin-top: 16px;
-}
-
-/* Let notation take most of the width and expand naturally */
-.notation {
-  flex: 1 1 auto;
-  min-width: 0; /* prevents flex overflow */
-}
-
-/* Keyboard column stays to the right and scrolls independently if needed */
-.keyboard-wrap {
-  flex: 0 0 340px; /* fixed width to prevent overlap */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: sticky;
-  top: 12px; /* stays visible when scrolling */
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  padding: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-/* Make sure keyboard fits within its column */
-.keyboard {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-/* Responsive stacking for small screens */
-@media (max-width: 900px) {
-  .notation-keyboard {
-    flex-direction: column;
-  }
-  .notation,
-  .keyboard-wrap {
-    width: 100%;
-    max-width: 100%;
-    position: static;
-  }
-}
-
+/* ---------- Key Highlights ---------- */
+.highlight-blue { background-color: var(--key-blue) !important; }
+.highlight-green { background-color: var(--key-green) !important; }
+.highlight-red { background-color: var(--key-red) !important; }
+.white-key.active { filter: brightness(0.9); }
+.black-key.active { filter: brightness(1.2); }
 
 /* ---------- OSMD Note Highlighting ---------- */
-
-/* Default OSMD noteheads */
-.vf-notehead path {
-  fill: black;
-  transition: fill 0.25s ease-in-out;
-}
-
-/* Default stavenote elements (noteheads, stems, flags, ledger lines) */
+.vf-notehead path { fill: black; transition: fill 0.25s ease-in-out; }
 .vf-stavenote path,
 .vf-stavenote line,
 .vf-stavenote rect,
@@ -247,17 +223,31 @@ button#stopBtn {
   stroke: #000;
   transition: fill 0.15s ease, stroke 0.15s ease;
 }
-
-/* Highlighted single notehead (legacy support) */
-.vf-notehead path.highlighted {
-  fill: dodgerblue !important;
-}
-
-/* Highlighted full note (head, stem, flags, dots, ledger lines) */
 .vf-stavenote.lit path,
 .vf-stavenote.lit line,
 .vf-stavenote.lit rect,
 .vf-stem.lit path {
   fill: dodgerblue !important;
   stroke: dodgerblue !important;
+}
+
+/* ---------- OSMD Title Fix ---------- */
+#music svg text {
+  font-family: "Roboto", sans-serif !important;
+  fill: #111 !important;
+}
+#music svg text[font-size="40px"],
+#music svg text[font-size="39px"],
+#music svg text[font-size="41px"] {
+  font-size: 24px !important;
+  font-weight: 400 !important;
+}
+
+/* ---------- SVG Scaling ---------- */
+#music svg {
+  width: 100%;
+  height: auto;
+  transform: scale(0.96);
+  transform-origin: top left;
+  display: block;
 }
