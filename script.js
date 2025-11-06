@@ -307,6 +307,12 @@ async function loadXMLFile(filePath) {
   }
   await osmd.load(cleanedXML);
   await osmd.render();
+  musicDiv.classList.remove("hidden");
+  // ✅ Show notation and remove keyboard top border
+musicDiv.classList.remove("hidden");
+keyboard.classList.add("song-loaded");
+
+
 
   // Mapping + controls
   noteEvents = extractNotesFromXML(cleanedXML);
@@ -624,7 +630,12 @@ function setupSongSelect() {
     const selectedFile = e.target.value;
     console.log(`🎵 Loading: ${selectedFile}`);
     await loadXMLFile(selectedFile);
+    tempoSelect.classList.remove("hidden");
+
+    
   });
+
+
 }
 
 

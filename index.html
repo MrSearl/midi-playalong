@@ -31,25 +31,15 @@
       <div class="playback-controls">
        <div class="controls-row top-row">
   <select id="songSelect"></select>
-  <button id="playBtn" class="control-btn">▶ Play</button>
-  <button id="stopBtn" class="control-btn">⏹ Stop</button>
-  <button id="loopBtn" class="control-btn loop-off">🔁 Loop</button>
+  <select id="tempoSelect" class="hidden"></select>
+
 </div>
 
 
-<div class="row bar-row">
-  <select id="loopStart">
-    <option value="" disabled selected>Start</option>
-  </select>
 
-  <select id="loopEnd">
-    <option value="" disabled selected>To End Of</option>
-  </select>
-</div>
-
+<!-- 
     <div class="row tempo-row">
-  <select id="tempoSelect"></select>
-</div>
+</div> -->
 
       <div class="row volume-row">
           <label>
@@ -90,9 +80,22 @@
 
       <!-- ---------- Notation + Keyboard ---------- -->
       <div class="notation-keyboard">
-        <div class="notation" id="music"></div>
+        <div class="notation hidden" id="music" ></div> </div>
         <div class="keyboard" id="keyboard"></div>
       </div>
+<div class="bottom-controls">  <button id="playBtn" class="control-btn">▶ Play</button>
+  <button id="stopBtn" class="control-btn">⏹ Stop</button>
+  <button id="loopBtn" class="control-btn loop-off">🔁 Loop</button>
+  <select id="loopStart">
+    <option value="" disabled selected>Starting Bar</option>
+  </select>
+
+  <select id="loopEnd">
+    <option value="" disabled selected>To End Of</option>
+  </select>
+
+</div>
+
     </main>
 
     <script src="script.js"></script>

@@ -184,8 +184,7 @@ select {
   background: #fff;
   border: 1px solid #ddd;
   border-bottom: none;
-  border-radius: 6px 6px 0 0;
-  overflow: hidden;
+  border-radius: 6px;
 }
 
 .keyboard,
@@ -196,11 +195,24 @@ select {
   align-items: flex-end;
   background: #fff;
   border: 1px solid #ddd;
-  border-top: none;
-  border-radius: 0 0 6px 6px;
+  border-top: 1px solid #ddd; /* keep for initial empty state */
+  border-radius:6px;
   padding: 8px 6px 20px;
   overflow-x: auto;
   user-select: none;
+  transition: border-top 0.3s ease; /* smooth visual change */
+}
+
+/* add this new state */
+.keyboard.song-loaded,
+#keyboard.song-loaded {
+  border-top: 0;
+}
+
+.notation-keyboard{
+
+border-radius:6px;
+
 }
 
 /* ---------- Keyboard Layout ---------- */
@@ -447,4 +459,77 @@ input[type="range"]::-moz-range-progress {
 input[type="range"]:active::-webkit-slider-thumb {
   background: var(--key-green);
   transform: scale(1.2);
+}
+
+/* ---------- Bottom Playback Controls ---------- */
+.bottom-controls {
+  display: flex;
+  justify-content: left;
+  align-items: center;
+  gap: 12px;
+  background: var(--subtle);
+  border: 1px solid #d6dde7;
+  border-radius: 8px;
+  padding: 14px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+/* Match top controls’ button style */
+.bottom-controls button {
+  font-weight: 500;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 6px 16px;
+  height: 36px;
+  width: 120px;
+  text-align: left;
+}
+
+.bottom-controls button:hover:not(:disabled) {
+  border-color: #666;
+  background: #f5f5f5;
+}
+
+/* Play / Stop / Loop color behaviour */
+#playBtn.playing {
+  background: var(--key-green);
+  color: #fff;
+  border-color: var(--key-green);
+}
+#stopBtn:active {
+  background: var(--key-red);
+  color: #fff;
+  border-color: var(--key-red);
+}
+#loopBtn.loop-on {
+  background: var(--key-green);
+  color: #fff;
+  border-color: var(--key-green);
+}
+#loopBtn.loop-on:hover {
+  background: #fff;
+  color: var(--key-green);
+  border-color: var(--key-green);
+}
+#loopBtn.loop-off:hover {
+  background: #f5f5f5;
+  border-color: #666;
+}
+
+.bottom-controls select {
+
+width:150px;
+
+
+}
+
+/* ---------- Hide elements until song loaded ---------- */
+.hidden {
+  display: none !important;
 }
