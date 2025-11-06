@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>MIDI Playalong</title>
+    <title>Keyboard Practice</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <!-- Tone.js (UMD build) -->
@@ -29,16 +29,13 @@
       <!-- ---------- Controls ---------- -->
 
       <div class="playback-controls">
-        <div class="song-select-row">
+       <div class="controls-row top-row">
   <select id="songSelect"></select>
+  <button id="playBtn" class="control-btn">▶ Play</button>
+  <button id="stopBtn" class="control-btn">⏹ Stop</button>
+  <button id="loopBtn" class="control-btn loop-off">🔁 Loop</button>
 </div>
-        <!-- Top row: Play, Stop, Loop, Bar selection, Tempo -->
-        <div class="row top-row">
-          <div class="buttons-group">
-            <button id="playBtn">▶ Play</button>
-            <button id="stopBtn">⏹ Stop</button>
 
-       <button id="loopBtn" class="loop-off">Loop</button>
 
 <div class="row bar-row">
   <select id="loopStart">
@@ -54,10 +51,7 @@
   <select id="tempoSelect"></select>
 </div>
 
-        </div>
-
-        <!-- Second row: Volume controls -->
-        <div class="row volume-row">
+      <div class="row volume-row">
           <label>
             🎹 Piano Volume
             <input
@@ -83,11 +77,16 @@
           </label>
         </div>
 
+        </div>
+
+        <!-- Second row: Volume controls -->
+  
+
         <!-- Status row (moved inside controls) -->
         <!-- <div class="row status-row">
           <div id="status" class="status">Loading…</div>
         </div> -->
-      </div>
+      <!-- </div> -->
 
       <!-- ---------- Notation + Keyboard ---------- -->
       <div class="notation-keyboard">

@@ -32,9 +32,8 @@ h1 {
   margin: 0;
   font-weight: 400;
   font-size: 28px;
-  text-align: left;
   letter-spacing: 0.5px;
-  color:#fff;
+  color: #fff;
   text-align: center;
 }
 
@@ -42,15 +41,6 @@ main {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-}
-
-/* ---------- Status ---------- */
-.status {
-  padding: 6px 10px;
-  background: var(--subtle);
-  border: 1px solid #d6dde7;
-  border-radius: 6px;
-  display: inline-block;
 }
 
 /* ---------- Playback Controls ---------- */
@@ -69,34 +59,37 @@ main {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
+  gap: 25px;
   flex-wrap: wrap;
 }
 
-/* ---------- Buttons ---------- */
-.playback-controls button {
-    font-weight: 500;
-    padding: 6px 16px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    background: #fff;
-    color: #333;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-right: 12px;
-    width:150px
+/* ---------- Buttons (Play, Stop, Loop, etc.) ---------- */
+button,
+.control-btn {
+  font-weight: 500;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 6px 16px;
+  height: 34px;
+  width: 150px;
 }
-.playback-controls button:hover:not(:disabled) {
+
+button:hover:not(:disabled) {
   border-color: #666;
   background: #f5f5f5;
 }
 
-.playback-controls button:disabled {
+button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Play Button - lit green when playing */
+/* Play Button - green when playing */
 #playBtn.playing {
   background: var(--key-green);
   color: #fff;
@@ -110,28 +103,16 @@ main {
   border-color: var(--key-red);
 }
 
-/* Loop Button toggle */
-/* ---------- Loop Button Size & Alignment ---------- */
-#loopBtn {
-  font-weight: 500;
-  padding: 6px 16px;          /* same padding as Play/Stop */
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: #fff;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  height: 34px;               /* ensures equal height */
-  line-height: normal;        /* prevents slight shrink */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-
+/* Loop Button States */
 #loopBtn.loop-on {
   background: var(--key-green);
   color: #fff;
+  border-color: var(--key-green);
+}
+
+#loopBtn.loop-on:hover {
+  background: #fff;
+  color: var(--key-green);
   border-color: var(--key-green);
 }
 
@@ -141,46 +122,37 @@ main {
   border-color: #ccc;
 }
 
-
-#loopBtn:hover:not(:disabled) {
-  border-color: #666;
-  background: #f5f5f5;
-}
-
-/* ---------- Loop Button Hover States ---------- */
-#loopBtn.loop-on:hover {
-  background: #fff;
-  color: var(--key-green);
-  border-color: var(--key-green);
-}
-
 #loopBtn.loop-off:hover {
   border-color: #666;
   background: #f5f5f5;
-  border-color: #666;
 }
 
-
 /* ---------- Dropdowns ---------- */
-.playback-controls select {
+select {
   background: #fff;
   border: 1px solid #ccc;
   border-radius: 6px;
   padding: 6px 10px;
-  width: 150px;
   height: 34px;
   cursor: pointer;
 }
 
-/* ---------- Labels ---------- */
-.playback-controls label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.playback-controls select,
+.bar-row select,
+#tempoSelect,
+#songSelect {
+  min-width: 110px;
 }
 
-/* ---------- Volume Row ---------- */
-.volume-row label {
+#songSelect:hover,
+.playback-controls select:hover,
+.bar-row select:hover,
+#tempoSelect:hover {
+  border-color: var(--accent);
+}
+
+/* ---------- Volume Controls ---------- */
+.volume-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -190,23 +162,24 @@ main {
   width: 200px;
 }
 
-/* ---------- Tempo Display ---------- */
-.tempo-display {
+/* ---------- Tempo Row ---------- */
+.tempo-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-left: auto;
+  gap: 10px;
+  margin-top: 12px;
 }
 
-#tempoValue {
-  font-weight: 500;
+/* ---------- Top Row (Song Select + Buttons) ---------- */
+.controls-row.top-row {
+  display: flex;
+  justify-content: left;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 10px;
 }
 
-#tempoSlider {
-  width: 220px;
-}
-
-/* ---------- Notation + Keyboard ---------- */
+/* ---------- Notation & Keyboard ---------- */
 .notation {
   background: #fff;
   border: 1px solid #ddd;
@@ -219,19 +192,16 @@ main {
 #keyboard {
   position: relative;
   display: flex;
-  justify-content: center;
+  justify-content: left;
   align-items: flex-end;
   background: #fff;
   border: 1px solid #ddd;
   border-top: none;
   border-radius: 0 0 6px 6px;
-  padding: 8px 6px 12px;
-  padding-bottom: 20px;   /* 👈 add extra space below */
+  padding: 8px 6px 20px;
   overflow-x: auto;
   user-select: none;
 }
-
-
 
 /* ---------- Keyboard Layout ---------- */
 .key-group {
@@ -317,7 +287,6 @@ main {
   font-weight: 400 !important;
 }
 
-
 /* ---------- SVG Scaling ---------- */
 #music svg {
   width: 100%;
@@ -327,9 +296,6 @@ main {
   display: block;
 }
 
-
-/* ---------- Bar Range Row ---------- */
-/* ---------- Bar Range Row ---------- */
 /* ---------- Bar Range Row ---------- */
 .bar-row {
   display: flex;
@@ -337,18 +303,7 @@ main {
   justify-content: flex-start;
   gap: 16px;
   flex-wrap: wrap;
-  margin-top:12px;
-}
-
-.bar-row select {
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 6px 10px;
-  height: 34px;
-  min-width: 110px;
-  cursor: pointer;
-  color: #555;
+  margin-top: 12px;
 }
 
 .bar-row select:invalid {
@@ -356,23 +311,140 @@ main {
 }
 
 
-/* ---------- Tempo Row ---------- */
-.tempo-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top:12px
-}
-
-#tempoSelect {
-  background: #fff;
+/* ---------- Buttons & Dropdowns (Uniform Controls) ---------- */
+button,
+.control-btn,
+select {
+  font-weight: 500;
+  font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 6px;
-  padding: 6px 10px;
-  height: 34px;
-  min-width: 100px;
-  cursor: pointer;
+  background: #fff;
   color: #333;
-  font-family: "Roboto", sans-serif;
-  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 6px 16px;
+  height: 36px;
+  width: 190px; /* ✅ consistent width for all buttons and selects */
+  text-align: left;
+}
+
+/* Hover / Disabled */
+button:hover:not(:disabled),
+select:hover {
+  border-color: #666;
+  background: #f5f5f5;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Play Button - active (green) */
+#playBtn.playing {
+  background: var(--key-green);
+  color: #fff;
+  border-color: var(--key-green);
+}
+
+/* Stop Button - red when pressed */
+#stopBtn:active {
+  background: var(--key-red);
+  color: #fff;
+  border-color: var(--key-red);
+}
+
+/* Loop Button States */
+#loopBtn.loop-on {
+  background: var(--key-green);
+  color: #fff;
+  border-color: var(--key-green);
+}
+#loopBtn.loop-on:hover {
+  background: #fff;
+  color: var(--key-green);
+  border-color: var(--key-green);
+}
+#loopBtn.loop-off {
+  background: #fff;
+  color: #333;
+  border-color: #ccc;
+}
+#loopBtn.loop-off:hover {
+  border-color: #666;
+  background: #f5f5f5;
+}
+
+/* Select Placeholder Style */
+select:invalid {
+  color: #999;
+}
+
+
+/* ---------- Volume Faders (Bolder Style) ---------- */
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 220px;
+  height: 10px;
+  background: linear-gradient(to right, var(--accent) 50%, #ccc 50%);
+  border-radius: 5px;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+/* dynamically update filled color */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 5px;
+  background: #ccc;
+}
+input[type="range"]::-moz-range-track {
+  height: 10px;
+  border-radius: 5px;
+  background: #ccc;
+}
+
+/* Thumb (handle) */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--key-blue);
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 3px rgba(0,0,0,0.4);
+  margin-top: -4px; /* centers thumb vertically */
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: var(--key-green);
+  transform: scale(1.15);
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--key-blue);
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 3px rgba(0,0,0,0.4);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+input[type="range"]::-moz-range-thumb:hover {
+  background: var(--key-green);
+  transform: scale(1.15);
+}
+input[type="range"]::-moz-range-progress {
+  background: var(--accent);
+  height: 10px;
+  border-radius: 5px;
+}
+
+/* Optional: active state (while dragging) */
+input[type="range"]:active::-webkit-slider-thumb {
+  background: var(--key-green);
+  transform: scale(1.2);
 }

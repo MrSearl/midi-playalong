@@ -17,7 +17,7 @@ const loopBtn = document.getElementById("loopBtn");
 // ---------- Song List ----------
 // You can easily update this list later (add/remove songs)
 const songs = [
-  { title: "Get Lucky Verse", path: "./src/assets/test6.xml" },
+  { title: "Get Lucky Verse", path: "./src/assets/getluckyverse.xml" },
   
   { title: "Get Lucky Chorus", path: "./src/assets/getluckychorus.xml" },
   { title: "Three Little Birds", path: "./src/assets/threelittlebirds.xml" }
