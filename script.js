@@ -161,17 +161,17 @@ function unlightKey(midi) {
 async function loadInstruments() {
   // 🎹 Piano volume & chain
   pianoVol = new Tone.Gain(0.8);
-  synthPiano = new Tone.Sampler({
-    urls: {
-      A1: "A1.mp3",
-      C2: "C2.mp3",
-      C3: "C3.mp3",
-      C4: "C4.mp3",
-      C5: "C5.mp3",
-    },
-    baseUrl: "https://tonejs.github.io/audio/salamander/",
-    onload: () => console.log("🎹 Piano ready"),
-  });
+synthPiano = new Tone.Sampler({
+  urls: {
+    A1: "A1.mp3",
+    C2: "C2.mp3",
+    C3: "C3.mp3",
+    C4: "C4.mp3",
+    C5: "C5.mp3",
+  },
+  baseUrl: "./src/assets/piano/", // 👈 now loads from your repo
+  onload: () => console.log("🎹 Local piano loaded"),
+});
   synthPiano.connect(pianoVol);
   pianoVol.toDestination();
 
