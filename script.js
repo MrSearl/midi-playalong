@@ -1,6 +1,7 @@
 // ---------- Globals ----------
 const Tone = window.Tone;
-const OpenSheetMusicDisplay = window.opensheetmusicdisplay.OpenSheetMusicDisplay;
+const OpenSheetMusicDisplay =
+  window.opensheetmusicdisplay.OpenSheetMusicDisplay;
 
 // ---------- Elements ----------
 const playBtn = document.getElementById("playBtn");
@@ -18,11 +19,11 @@ const loopBtn = document.getElementById("loopBtn");
 // You can easily update this list later (add/remove songs)
 const songs = [
   { title: "Get Lucky Verse", path: "./src/assets/getluckyverse.xml" },
-  
-  { title: "Get Lucky Chorus", path: "./src/assets/getluckychorus.xml" },
-  { title: "Three Little Birds", path: "./src/assets/threelittlebirds.xml" }
-];
 
+  { title: "Get Lucky Chorus", path: "./src/assets/getluckychorus.xml" },
+  { title: "Three Little Birds", path: "./src/assets/threelittlebirds.xml" },
+  { title: "When The Saints...", path: "./src/assets/saintsmelody.xml" },
+];
 
 // ---------- Variables ----------
 let osmd;
@@ -39,7 +40,6 @@ let skipPitchedIdx = new Set();
 let lastLitKey = null;
 let loopEnabled = false;
 
-
 // ---------- Init ----------
 async function init() {
   document.body.addEventListener(
@@ -54,21 +54,20 @@ async function init() {
     { once: true }
   );
 
-
   // ---------- Spacebar Toggle ----------
-document.addEventListener("keydown", (e) => {
-  // Ignore if typing in an input or textarea
-  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  document.addEventListener("keydown", (e) => {
+    // Ignore if typing in an input or textarea
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
 
-  if (e.code === "Space") {
-    e.preventDefault(); // stop page from scrolling
-    if (Tone.Transport.state === "started") {
-      stopBtn.click(); // stop playback
-    } else {
-      playBtn.click(); // start playback
+    if (e.code === "Space") {
+      e.preventDefault(); // stop page from scrolling
+      if (Tone.Transport.state === "started") {
+        stopBtn.click(); // stop playback
+      } else {
+        playBtn.click(); // start playback
+      }
     }
-  }
-});
+  });
 
   // status.innerText = "🎸 Loading instruments...";
   buildKeyboard(48, 84);
@@ -125,7 +124,20 @@ function buildKeyboard(midiStart, midiEnd) {
 }
 
 function midiToNoteName(midi) {
-  const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  const notes = [
+    "C",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "F",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "B",
+  ];
   const name = notes[midi % 12];
   const octave = Math.floor(midi / 12) - 1;
   return `${name}${octave}`;
@@ -155,62 +167,95 @@ function unlightKey(midi) {
   if (lastLitKey === key) lastLitKey = null;
 }
 
-
 // ---------- Instruments ----------
 // ---------- Instruments ----------
 async function loadInstruments() {
   // 🎹 Piano volume & chain
   pianoVol = new Tone.Gain(0.8);
-synthPiano = new Tone.Sampler({
-  urls: {
-    A1: "A1.mp3",
-    C2: "C2.mp3",
-    C3: "C3.mp3",
-    C4: "C4.mp3",
-    C5: "C5.mp3",
-  },
-  baseUrl: "./src/assets/piano/", // 👈 now loads from your repo
-  onload: () => console.log("🎹 Local piano loaded"),
-});
+  synthPiano = new Tone.Sampler({
+    urls: {
+      A1: "A1.mp3",
+      C2: "C2.mp3",
+      C3: "C3.mp3",
+      C4: "C4.mp3",
+      C5: "C5.mp3",
+    },
+    baseUrl: "./src/assets/piano/", // 👈 now loads from your repo
+    onload: () => console.log("🎹 Local piano loaded"),
+  });
   synthPiano.connect(pianoVol);
   pianoVol.toDestination();
 
   // 🎸 Guitar volume & chain
- // 🎸 Full-range guitar (A1–G5) with missing notes removed
-const reverb = new Tone.Reverb({ decay: 3.5, wet: 0.15 });
-guitarVol = new Tone.Gain(0.3); // quieter on load
+  // 🎸 Full-range guitar (A1–G5) with missing notes removed
+  const reverb = new Tone.Reverb({ decay: 3.5, wet: 0.15 });
+  guitarVol = new Tone.Gain(0.3); // quieter on load
 
-guitar = new Tone.Sampler({
-  urls: (() => {
-    const notes = [
-      "A1","A#1","B1",
-      "C2","C#2","D2","D#2","E2","F2","G2",      // removed F#2, G#2
-      "A3","A#3","B3",
-      "C3","D3","E3","F3","F#3","G3",            // removed C#3, D#3
-      "A4","A#4","B4",
-      "C4","C#4","D4","D#4","E4","F4","G4",      // removed G#4
-      "A5","A#5","B5",
-      "C5","C#5","D5","D#5","E5","F5","F#5","G5"
-    ];
-    const map = {};
-    notes.forEach(n => {
-      const safeName = n.replace("#", "sharp");
-      map[n] = `${safeName}.wav`;
-    });
-    return map;
-  })(),
-  baseUrl: "./src/assets/guit/full/",
-  release: 1.8,
-  attack: 0.02,
-  curve: "exponential",
-  onload: () => console.log("🎸 Full-range guitar loaded (missing F#2, G#2, C#3, D#3, G#4)"),
-});
+  guitar = new Tone.Sampler({
+    urls: (() => {
+      const notes = [
+        "A1",
+        "A#1",
+        "B1",
+        "C2",
+        "C#2",
+        "D2",
+        "D#2",
+        "E2",
+        "F2",
+        "G2", // removed F#2, G#2
+        "A3",
+        "A#3",
+        "B3",
+        "C3",
+        "D3",
+        "E3",
+        "F3",
+        "F#3",
+        "G3", // removed C#3, D#3
+        "A4",
+        "A#4",
+        "B4",
+        "C4",
+        "C#4",
+        "D4",
+        "D#4",
+        "E4",
+        "F4",
+        "G4", // removed G#4
+        "A5",
+        "A#5",
+        "B5",
+        "C5",
+        "C#5",
+        "D5",
+        "D#5",
+        "E5",
+        "F5",
+        "F#5",
+        "G5",
+      ];
+      const map = {};
+      notes.forEach((n) => {
+        const safeName = n.replace("#", "sharp");
+        map[n] = `${safeName}.wav`;
+      });
+      return map;
+    })(),
+    baseUrl: "./src/assets/guit/full/",
+    release: 1.8,
+    attack: 0.02,
+    curve: "exponential",
+    onload: () =>
+      console.log(
+        "🎸 Full-range guitar loaded (missing F#2, G#2, C#3, D#3, G#4)"
+      ),
+  });
 
-// ✅ Proper signal chain
-guitar.connect(guitarVol);
-guitarVol.connect(reverb);
-reverb.toDestination();
-
+  // ✅ Proper signal chain
+  guitar.connect(guitarVol);
+  guitarVol.connect(reverb);
+  reverb.toDestination();
 
   await Tone.loaded();
 }
@@ -248,7 +293,9 @@ async function loadXMLFile(filePath) {
     if (dir.querySelector("metronome, sound, words")) dir.remove();
   });
   xmlDoc
-    .querySelectorAll("part-name, part-abbreviation, instrument-name, score-instrument, midi-instrument, part-name-display")
+    .querySelectorAll(
+      "part-name, part-abbreviation, instrument-name, score-instrument, midi-instrument, part-name-display"
+    )
     .forEach((el) => el.remove());
 
   const cleanedXML = new XMLSerializer().serializeToString(xmlDoc);
@@ -291,7 +338,9 @@ async function loadXMLFile(filePath) {
     if (dir.querySelector("metronome, sound, words")) dir.remove();
   });
   xmlDoc
-    .querySelectorAll("part-name, part-abbreviation, instrument-name, score-instrument, midi-instrument, part-name-display")
+    .querySelectorAll(
+      "part-name, part-abbreviation, instrument-name, score-instrument, midi-instrument, part-name-display"
+    )
     .forEach((el) => el.remove());
 
   const cleanedXML = new XMLSerializer().serializeToString(xmlDoc);
@@ -309,10 +358,8 @@ async function loadXMLFile(filePath) {
   await osmd.render();
   musicDiv.classList.remove("hidden");
   // ✅ Show notation and remove keyboard top border
-musicDiv.classList.remove("hidden");
-keyboard.classList.add("song-loaded");
-
-
+  musicDiv.classList.remove("hidden");
+  keyboard.classList.add("song-loaded");
 
   // Mapping + controls
   noteEvents = extractNotesFromXML(cleanedXML);
@@ -321,14 +368,14 @@ keyboard.classList.add("song-loaded");
   setupTempoSelect(bpm); // ✅ build tempo select after we know the tempo
 }
 
-
-
 // ---------- Extract Notes ----------
 function extractNotesFromXML(xmlText) {
   skipPitchedIdx = new Set();
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlText, "application/xml");
-  const divisions = parseFloat(xmlDoc.querySelector("divisions")?.textContent || "64");
+  const divisions = parseFloat(
+    xmlDoc.querySelector("divisions")?.textContent || "64"
+  );
   const allNotes = Array.from(xmlDoc.getElementsByTagName("note"));
   const events = [];
   let timeBeats = 0;
@@ -338,7 +385,10 @@ function extractNotesFromXML(xmlText) {
   for (const n of allNotes) {
     const durDiv = parseFloat(n.querySelector("duration")?.textContent || "0");
     const durBeats = durDiv / divisions;
-    const measure = parseInt(n.closest("measure")?.getAttribute("number") || "0", 10);
+    const measure = parseInt(
+      n.closest("measure")?.getAttribute("number") || "0",
+      10
+    );
 
     if (n.querySelector("rest")) {
       events.push({ type: "rest", timeBeats, durBeats, measure });
@@ -353,20 +403,35 @@ function extractNotesFromXML(xmlText) {
     }
 
     const step = pitchNode.querySelector("step")?.textContent;
-    const alter = parseInt(pitchNode.querySelector("alter")?.textContent || "0", 10);
-    const octave = parseInt(pitchNode.querySelector("octave")?.textContent || "4", 10);
-    const midi = 12 * (octave + 1) + { C:0, D:2, E:4, F:5, G:7, A:9, B:11 }[step] + alter;
+    const alter = parseInt(
+      pitchNode.querySelector("alter")?.textContent || "0",
+      10
+    );
+    const octave = parseInt(
+      pitchNode.querySelector("octave")?.textContent || "4",
+      10
+    );
+    const midi =
+      12 * (octave + 1) +
+      { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[step] +
+      alter;
     const pitchKey = `${step}${alter}${octave}`;
     const tieStart = n.querySelector("tie[type='start'], tied[type='start']");
     const tieStop = n.querySelector("tie[type='stop'], tied[type='stop']");
 
     if (tieStart && !tieStop) {
-      const entry = tieMap.get(pitchKey) || { startBeats: timeBeats, accBeats: 0 };
+      const entry = tieMap.get(pitchKey) || {
+        startBeats: timeBeats,
+        accBeats: 0,
+      };
       entry.accBeats += durBeats;
       tieMap.set(pitchKey, entry);
       pitchedVisualIdx++;
     } else if (tieStart && tieStop) {
-      const entry = tieMap.get(pitchKey) || { startBeats: timeBeats, accBeats: 0 };
+      const entry = tieMap.get(pitchKey) || {
+        startBeats: timeBeats,
+        accBeats: 0,
+      };
       entry.accBeats += durBeats;
       events.push({
         type: "note",
@@ -393,7 +458,13 @@ function extractNotesFromXML(xmlText) {
       skipPitchedIdx.add(pitchedVisualIdx);
       pitchedVisualIdx++;
     } else {
-      events.push({ type: "note", timeBeats, midiPitch: midi, durBeats, measure });
+      events.push({
+        type: "note",
+        timeBeats,
+        midiPitch: midi,
+        durBeats,
+        measure,
+      });
       pitchedVisualIdx++;
     }
 
@@ -431,9 +502,12 @@ async function mapXmlNotesToSvg() {
   const playableEvents = noteEvents.filter((e) => e.type === "note");
   const len = Math.min(keptGroups.length, playableEvents.length);
   svgNoteMap = [];
-  for (let i = 0; i < len; i++) svgNoteMap.push({ event: playableEvents[i], group: keptGroups[i] });
+  for (let i = 0; i < len; i++)
+    svgNoteMap.push({ event: playableEvents[i], group: keptGroups[i] });
 
-  console.log(`🎯 Mapped ${svgNoteMap.length}/${playableEvents.length} notes to SVG.`);
+  console.log(
+    `🎯 Mapped ${svgNoteMap.length}/${playableEvents.length} notes to SVG.`
+  );
 }
 
 // ---------- Highlighter ----------
@@ -456,20 +530,26 @@ function setupLoopControls() {
     osmd?.GraphicSheet?.MeasureList?.flat()?.length ||
     0;
 
-startSel.innerHTML = '<option value="" disabled selected>Start</option>';
-endSel.innerHTML = '<option value="" disabled selected>To End Of</option>';
+  startSel.innerHTML = '<option value="" disabled selected>Start</option>';
+  endSel.innerHTML = '<option value="" disabled selected>To End Of</option>';
 
-for (let i = 1; i <= measureCount; i++) {
-  startSel.add(new Option(i, i));
-  endSel.add(new Option(i, i));
-}
+  for (let i = 1; i <= measureCount; i++) {
+    startSel.add(new Option(i, i));
+    endSel.add(new Option(i, i));
+  }
 
   loopEndBar = measureCount;
   endSel.value = measureCount;
   startSel.value = loopStartBar;
 
-  startSel.addEventListener("change", (e) => (loopStartBar = parseInt(e.target.value)));
-  endSel.addEventListener("change", (e) => (loopEndBar = parseInt(e.target.value)));
+  startSel.addEventListener(
+    "change",
+    (e) => (loopStartBar = parseInt(e.target.value))
+  );
+  endSel.addEventListener(
+    "change",
+    (e) => (loopEndBar = parseInt(e.target.value))
+  );
 }
 
 // ---------- MIDI ----------
@@ -542,8 +622,7 @@ playBtn.addEventListener("click", async () => {
   }
 
   Tone.Transport.start("+0.05");
-playBtn.classList.add("playing");
-
+  playBtn.classList.add("playing");
 });
 
 // ---------- Stop ----------
@@ -554,7 +633,6 @@ stopBtn.addEventListener("click", () => {
   highlightNoteSequentialByEvent(null);
   // status.innerText = "⏹ Stopped.";
   playBtn.classList.remove("playing");
-
 });
 
 // ---------- SVG Wait ----------
@@ -596,14 +674,12 @@ function setupTempoSelect(defaultBpm = 120) {
   });
 }
 
-
 // ---------- Loop Button ----------
 loopBtn.addEventListener("click", () => {
   loopEnabled = !loopEnabled;
   loopBtn.classList.toggle("loop-on", loopEnabled);
   loopBtn.classList.toggle("loop-off", !loopEnabled);
 });
-
 
 function setupSongSelect() {
   const songSelect = document.getElementById("songSelect");
@@ -631,14 +707,8 @@ function setupSongSelect() {
     console.log(`🎵 Loading: ${selectedFile}`);
     await loadXMLFile(selectedFile);
     tempoSelect.classList.remove("hidden");
-
-    
   });
-
-
 }
-
-
 
 // ---------- Go ----------
 init();
