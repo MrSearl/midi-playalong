@@ -23,6 +23,7 @@ const songs = [
   { title: "Get Lucky Chorus", path: "./src/assets/getluckychorus.xml" },
   { title: "Three Little Birds", path: "./src/assets/threelittlebirds.xml" },
   { title: "When The Saints...", path: "./src/assets/saintsmelody.xml" },
+  { title: "New World Chords", path: "./src/assets/newworldchords.xml" },
 ];
 
 // ---------- Variables ----------
@@ -376,13 +377,16 @@ function extractNotesFromXML(xmlText) {
   const divisions = parseFloat(
     xmlDoc.querySelector("divisions")?.textContent || "64"
   );
+
   const allNotes = Array.from(xmlDoc.getElementsByTagName("note"));
   const events = [];
   let timeBeats = 0;
+  let lastBaseTime = 0;
   const tieMap = new Map();
   let pitchedVisualIdx = 0;
 
   for (const n of allNotes) {
+    const isChordTone = !!n.querySelector("chord");
     const durDiv = parseFloat(n.querySelector("duration")?.textContent || "0");
     const durBeats = durDiv / divisions;
     const measure = parseInt(
@@ -390,6 +394,7 @@ function extractNotesFromXML(xmlText) {
       10
     );
 
+    // rests
     if (n.querySelector("rest")) {
       events.push({ type: "rest", timeBeats, durBeats, measure });
       timeBeats += durBeats;
@@ -398,7 +403,7 @@ function extractNotesFromXML(xmlText) {
 
     const pitchNode = n.querySelector("pitch");
     if (!pitchNode) {
-      timeBeats += durBeats;
+      if (!isChordTone) timeBeats += durBeats;
       continue;
     }
 
@@ -415,62 +420,31 @@ function extractNotesFromXML(xmlText) {
       12 * (octave + 1) +
       { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[step] +
       alter;
+
     const pitchKey = `${step}${alter}${octave}`;
     const tieStart = n.querySelector("tie[type='start'], tied[type='start']");
     const tieStop = n.querySelector("tie[type='stop'], tied[type='stop']");
 
-    if (tieStart && !tieStop) {
-      const entry = tieMap.get(pitchKey) || {
-        startBeats: timeBeats,
-        accBeats: 0,
-      };
-      entry.accBeats += durBeats;
-      tieMap.set(pitchKey, entry);
-      pitchedVisualIdx++;
-    } else if (tieStart && tieStop) {
-      const entry = tieMap.get(pitchKey) || {
-        startBeats: timeBeats,
-        accBeats: 0,
-      };
-      entry.accBeats += durBeats;
-      events.push({
-        type: "note",
-        timeBeats: entry.startBeats,
-        midiPitch: midi,
-        durBeats: entry.accBeats,
-        measure,
-      });
-      tieMap.delete(pitchKey);
-      skipPitchedIdx.add(pitchedVisualIdx);
-      pitchedVisualIdx++;
-    } else if (!tieStart && tieStop) {
-      const entry = tieMap.get(pitchKey);
-      const startBeats = entry ? entry.startBeats : timeBeats - durBeats;
-      const totalBeats = (entry ? entry.accBeats : 0) + durBeats;
-      events.push({
-        type: "note",
-        timeBeats: startBeats,
-        midiPitch: midi,
-        durBeats: totalBeats,
-        measure,
-      });
-      tieMap.delete(pitchKey);
-      skipPitchedIdx.add(pitchedVisualIdx);
-      pitchedVisualIdx++;
-    } else {
-      events.push({
-        type: "note",
-        timeBeats,
-        midiPitch: midi,
-        durBeats,
-        measure,
-      });
-      pitchedVisualIdx++;
+    // Determine this note's actual start time
+    const startTime = isChordTone ? lastBaseTime : timeBeats;
+
+    events.push({
+      type: "note",
+      timeBeats: startTime,
+      midiPitch: midi,
+      durBeats,
+      measure,
+    });
+
+    if (!isChordTone) {
+      lastBaseTime = timeBeats; // record for next chord tones
+      timeBeats += durBeats; // advance only after base note
     }
 
-    timeBeats += durBeats;
+    pitchedVisualIdx++;
   }
-  console.log(`🎼 Extracted ${events.length} events (beats-based).`);
+
+  console.log(`🎼 Extracted ${events.length} events (fixed chord timing).`);
   return events;
 }
 
@@ -488,38 +462,51 @@ async function mapXmlNotesToSvg() {
     svg.querySelector(`[id^="${CSS.escape(g.id)}-"]`)
   );
 
-  const keptGroups = [];
-  let pitchedIdx = 0;
-  for (const g of stemQualified) {
-    if (skipPitchedIdx.has(pitchedIdx)) {
-      pitchedIdx++;
-      continue;
-    }
-    keptGroups.push(g);
-    pitchedIdx++;
-  }
-
+  // --- Group note events by their start time (for chords)
   const playableEvents = noteEvents.filter((e) => e.type === "note");
-  const len = Math.min(keptGroups.length, playableEvents.length);
-  svgNoteMap = [];
-  for (let i = 0; i < len; i++)
-    svgNoteMap.push({ event: playableEvents[i], group: keptGroups[i] });
+  const groupedByTime = [];
+  playableEvents.forEach((ev) => {
+    const existing = groupedByTime.find(
+      (g) => Math.abs(g.timeBeats - ev.timeBeats) < 1e-4
+    );
+    if (existing) {
+      existing.events.push(ev);
+    } else {
+      groupedByTime.push({ timeBeats: ev.timeBeats, events: [ev] });
+    }
+  });
+
+  // Keep groups that correspond to rendered stavenotes
+  const keptGroups = stemQualified.slice(0, groupedByTime.length);
+  svgNoteMap = keptGroups.map((g, i) => ({
+    eventGroup: groupedByTime[i], // holds one or more events
+    group: g,
+  }));
 
   console.log(
-    `🎯 Mapped ${svgNoteMap.length}/${playableEvents.length} notes to SVG.`
+    `🎯 Mapped ${svgNoteMap.length}/${groupedByTime.length} time groups to SVG stavenotes.`
   );
 }
 
 // ---------- Highlighter ----------
 function highlightNoteSequentialByEvent(eventObj) {
+  // Clear any previous highlights
   document.querySelectorAll(".lit").forEach((el) => el.classList.remove("lit"));
   if (!eventObj) return;
-  const mapItem = svgNoteMap.find((m) => m.event === eventObj);
+
+  // Find the matching group by its event time
+  const mapItem = svgNoteMap.find(
+    (m) => Math.abs(m.eventGroup.timeBeats - eventObj.timeBeats) < 1e-4
+  );
+
   if (!mapItem) return;
   const group = mapItem.group;
   group.classList.add("lit");
-  const stem = group.querySelector(".vf-stem");
-  if (stem) stem.classList.add("lit");
+
+  // Light all noteheads and stem in this stavenote
+  group
+    .querySelectorAll(".vf-notehead, .vf-stem")
+    .forEach((el) => el.classList.add("lit"));
 }
 
 // ---------- Loop Controls ----------
@@ -590,26 +577,64 @@ playBtn.addEventListener("click", async () => {
     (ev) => ev.measure >= loopStartBar && ev.measure <= loopEndBar
   );
   const playableEvents = selectedEvents.filter((ev) => ev.type === "note");
-  if (!playableEvents.length) {
-    // status.innerText = "⚠️ No playable notes.";
-    return;
-  }
+  if (!playableEvents.length) return;
 
   const secPerBeat = 60 / bpm;
   const offset = playableEvents[0].timeBeats;
+
+  // ---- Group notes by their onset time (for chords) ----
+  const groupedByTime = [];
   playableEvents.forEach((ev) => {
-    const startSec = (ev.timeBeats - offset) * secPerBeat;
-    const durSec = ev.durBeats * secPerBeat;
+    const existing = groupedByTime.find(
+      (g) => Math.abs(g.timeBeats - ev.timeBeats) < 1e-4
+    );
+    if (existing) {
+      existing.notes.push(ev);
+    } else {
+      groupedByTime.push({
+        timeBeats: ev.timeBeats,
+        durBeats: ev.durBeats,
+        notes: [ev],
+      });
+    }
+  });
+
+  // ---- Track active notes to prevent early cutoff ----
+  const activeNotes = new Set();
+
+  groupedByTime.forEach((grp) => {
+    const startSec = (grp.timeBeats - offset) * secPerBeat;
+    const durSec = grp.durBeats * secPerBeat;
+
     Tone.Transport.scheduleOnce((time) => {
-      const freq = Tone.Frequency(ev.midiPitch, "midi").toFrequency();
-      guitar.triggerAttackRelease(freq, durSec, time);
-      highlightNoteSequentialByEvent(ev);
-      lightKey(ev.midiPitch, "lightblue");
+      grp.notes.forEach((n) => {
+        const freq = Tone.Frequency(n.midiPitch, "midi").toFrequency();
+        guitar.triggerAttack(freq, time);
+        activeNotes.add(n.midiPitch);
+        lightKey(n.midiPitch, "lightblue");
+      });
+
+      highlightNoteSequentialByEvent(grp.notes[0]);
+
+      // schedule release without interrupting later same-pitch notes
+      Tone.Transport.scheduleOnce(() => {
+        grp.notes.forEach((n) => {
+          // only release if still active
+          if (activeNotes.has(n.midiPitch)) {
+            const freq = Tone.Frequency(n.midiPitch, "midi").toFrequency();
+            guitar.triggerRelease(freq);
+            unlightKey(n.midiPitch);
+            activeNotes.delete(n.midiPitch);
+          }
+        });
+      }, startSec + durSec - 0.01); // small safety offset
     }, startSec);
   });
 
-  const last = playableEvents.at(-1);
+  // ---- Compute total duration for stop/reset ----
+  const last = groupedByTime.at(-1);
   const totalDurSec = (last.timeBeats - offset + last.durBeats) * secPerBeat;
+
   if (loopEnabled) {
     Tone.Transport.scheduleOnce(() => playBtn.click(), totalDurSec + 0.1);
   } else {
@@ -617,7 +642,10 @@ playBtn.addEventListener("click", async () => {
       Tone.Transport.stop();
       Tone.Transport.cancel();
       highlightNoteSequentialByEvent(null);
-      // status.innerText = "✅ Playback complete.";
+      activeNotes.clear();
+      document
+        .querySelectorAll(".white-key, .black-key")
+        .forEach((k) => (k.style.backgroundColor = ""));
     }, totalDurSec + 0.2);
   }
 
@@ -709,6 +737,21 @@ function setupSongSelect() {
     tempoSelect.classList.remove("hidden");
   });
 }
+
+// function highlightChordGroup(notes) {
+//   document.querySelectorAll(".lit").forEach((el) => el.classList.remove("lit"));
+//   if (!notes || !notes.length) return;
+
+//   // find all mapped SVG groups for these notes
+//   notes.forEach((ev) => {
+//     const mapItem = svgNoteMap.find((m) => m.event === ev);
+//     if (!mapItem) return;
+//     const group = mapItem.group;
+//     group.classList.add("lit");
+//     const stem = group.querySelector(".vf-stem");
+//     if (stem) stem.classList.add("lit");
+//   });
+// }
 
 // ---------- Go ----------
 init();
