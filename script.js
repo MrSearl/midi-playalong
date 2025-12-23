@@ -24,6 +24,7 @@ const songs = [
   { title: "Three Little Birds", path: "./src/assets/threelittlebirds.xml" },
   { title: "When The Saints...", path: "./src/assets/saintsmelody.xml" },
   { title: "New World Chords", path: "./src/assets/newworldchords.xml" },
+  { title: "The Final Countdown", path: "./src/assets/finalcountdown.xml" },
 ];
 
 // ---------- Variables ----------
