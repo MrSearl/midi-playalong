@@ -37,9 +37,10 @@ let audioReady = false;
 let currentIndex = 0;
 let loopStartBar = 1;
 let loopEndBar = 4;
-let skipPitchedIdx = new Set();
 let lastLitKey = null;
 let loopEnabled = false;
+let currentCleanedXML = "";
+
 
 // ---------- Init ----------
 async function init() {
@@ -274,9 +275,8 @@ function setupVolumeFaders() {
 }
 
 // ---------- Load XML ----------
-// ---------- Load XML ----------
 async function loadXMLFile(filePath) {
-  if (!filePath) return; // don't load until a file is chosen
+  if (!filePath) return;
 
   const resp = await fetch(filePath);
   const xmlText = await resp.text();
@@ -300,8 +300,8 @@ async function loadXMLFile(filePath) {
     .forEach((el) => el.remove());
 
   const cleanedXML = new XMLSerializer().serializeToString(xmlDoc);
+  currentCleanedXML = cleanedXML;
 
-  // OSMD
   if (!osmd) {
     osmd = new OpenSheetMusicDisplay(musicDiv, {
       autoResize: true,
@@ -310,68 +310,25 @@ async function loadXMLFile(filePath) {
       drawMeasureNumbers: true,
     });
   }
+
   await osmd.load(cleanedXML);
   await osmd.render();
 
-  // Mapping + controls
-  noteEvents = extractNotesFromXML(cleanedXML);
-  await mapXmlNotesToSvg();
-  setupLoopControls();
-  setupTempoSelect(bpm); // ✅ build tempo select after we know the tempo
-}
-// ---------- Load XML ----------
-async function loadXMLFile(filePath) {
-  if (!filePath) return; // don't load until a file is chosen
-
-  const resp = await fetch(filePath);
-  const xmlText = await resp.text();
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlText, "application/xml");
-
-  // Tempo
-  const tempoNode = xmlDoc.querySelector("sound[tempo]");
-  bpm = tempoNode ? parseFloat(tempoNode.getAttribute("tempo")) : 120;
-  Tone.Transport.bpm.value = bpm;
-
-  // Clean XML
-  xmlDoc.querySelectorAll("credit").forEach((el) => el.remove());
-  xmlDoc.querySelectorAll("direction").forEach((dir) => {
-    if (dir.querySelector("metronome, sound, words")) dir.remove();
-  });
-  xmlDoc
-    .querySelectorAll(
-      "part-name, part-abbreviation, instrument-name, score-instrument, midi-instrument, part-name-display"
-    )
-    .forEach((el) => el.remove());
-
-  const cleanedXML = new XMLSerializer().serializeToString(xmlDoc);
-
-  // OSMD
-  if (!osmd) {
-    osmd = new OpenSheetMusicDisplay(musicDiv, {
-      autoResize: true,
-      drawTitle: true,
-      drawPartNames: false,
-      drawMeasureNumbers: true,
-    });
-  }
-  await osmd.load(cleanedXML);
-  await osmd.render();
-  musicDiv.classList.remove("hidden");
-  // ✅ Show notation and remove keyboard top border
   musicDiv.classList.remove("hidden");
   keyboard.classList.add("song-loaded");
 
-  // Mapping + controls
   noteEvents = extractNotesFromXML(cleanedXML);
   await mapXmlNotesToSvg();
+
   setupLoopControls();
-  setupTempoSelect(bpm); // ✅ build tempo select after we know the tempo
+  setupTempoSelect(bpm);
 }
+
+
 
 // ---------- Extract Notes ----------
 function extractNotesFromXML(xmlText) {
-  skipPitchedIdx = new Set();
+
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlText, "application/xml");
   const divisions = parseFloat(
@@ -380,10 +337,12 @@ function extractNotesFromXML(xmlText) {
 
   const allNotes = Array.from(xmlDoc.getElementsByTagName("note"));
   const events = [];
+
   let timeBeats = 0;
   let lastBaseTime = 0;
-  const tieMap = new Map();
-  let pitchedVisualIdx = 0;
+
+  // Active ties keyed by midi pitch
+  const activeTies = new Map();
 
   for (const n of allNotes) {
     const isChordTone = !!n.querySelector("chord");
@@ -394,7 +353,7 @@ function extractNotesFromXML(xmlText) {
       10
     );
 
-    // rests
+    // ---------- Rests ----------
     if (n.querySelector("rest")) {
       events.push({ type: "rest", timeBeats, durBeats, measure });
       timeBeats += durBeats;
@@ -416,37 +375,134 @@ function extractNotesFromXML(xmlText) {
       pitchNode.querySelector("octave")?.textContent || "4",
       10
     );
+
     const midi =
       12 * (octave + 1) +
       { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[step] +
       alter;
 
-    const pitchKey = `${step}${alter}${octave}`;
     const tieStart = n.querySelector("tie[type='start'], tied[type='start']");
     const tieStop = n.querySelector("tie[type='stop'], tied[type='stop']");
 
-    // Determine this note's actual start time
     const startTime = isChordTone ? lastBaseTime : timeBeats;
 
-    events.push({
-      type: "note",
-      timeBeats: startTime,
-      midiPitch: midi,
-      durBeats,
-      measure,
-    });
+    // ---------- Tie handling ----------
+    if (tieStart && !tieStop) {
+      // Start of a tie
+      activeTies.set(midi, {
+        type: "note",
+        timeBeats: startTime,
+        midiPitch: midi,
+        durBeats,
+        measure
+      });
 
-    if (!isChordTone) {
-      lastBaseTime = timeBeats; // record for next chord tones
-      timeBeats += durBeats; // advance only after base note
+    } else if (tieStart && tieStop) {
+      // Middle of a tie
+      const ev = activeTies.get(midi);
+      if (ev) ev.durBeats += durBeats;
+
+      // Skip this rendered note visually
+
+    } else if (tieStop) {
+      // End of a tie
+      const ev = activeTies.get(midi);
+      if (ev) {
+        ev.durBeats += durBeats;
+        events.push(ev);
+        activeTies.delete(midi);
+      }
+
+      // Skip this rendered note visually
+
+    } else {
+      // Normal untied note
+      events.push({
+        type: "note",
+        timeBeats: startTime,
+        midiPitch: midi,
+        durBeats,
+        measure
+      });
     }
 
-    pitchedVisualIdx++;
+    // ---------- Advance time ----------
+    if (!isChordTone) {
+      lastBaseTime = timeBeats;
+      timeBeats += durBeats;
+    }
   }
 
-  console.log(`🎼 Extracted ${events.length} events (fixed chord timing).`);
+  console.log(`🎼 Extracted ${events.length} events (ties merged, visuals aligned).`);
   return events;
 }
+
+function extractVisualOnsetsFromXML(xmlText) {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlText, "application/xml");
+  const divisions = parseFloat(
+    xmlDoc.querySelector("divisions")?.textContent || "64"
+  );
+
+  const allNotes = Array.from(xmlDoc.getElementsByTagName("note"));
+
+  let timeBeats = 0;
+  let lastBaseTime = 0;
+
+  const onsets = [];
+
+  for (const n of allNotes) {
+    const isChordTone = !!n.querySelector("chord");
+    const durDiv = parseFloat(n.querySelector("duration")?.textContent || "0");
+    const durBeats = durDiv / divisions;
+
+    // rests advance time but still count as visual space
+    if (n.querySelector("rest")) {
+      timeBeats += durBeats;
+      continue;
+    }
+
+    const pitchNode = n.querySelector("pitch");
+    if (!pitchNode) {
+      if (!isChordTone) timeBeats += durBeats;
+      continue;
+    }
+
+    const tieStart = !!n.querySelector("tie[type='start'], tied[type='start']");
+    const tieStop  = !!n.querySelector("tie[type='stop'],  tied[type='stop']");
+
+    const startTime = isChordTone ? lastBaseTime : timeBeats;
+
+    if (!isChordTone) {
+      // New visual onset
+      onsets.push({
+        timeBeats: startTime,
+        notes: [{ tieStart, tieStop }]
+      });
+      lastBaseTime = timeBeats;
+      timeBeats += durBeats;
+    } else {
+      // Chord tone, attach to previous onset
+      const last = onsets[onsets.length - 1];
+      if (last) last.notes.push({ tieStart, tieStop });
+    }
+  }
+
+  // Decide which onsets should be highlighted
+  return onsets.map(o => {
+    const hasNewOnset = o.notes.some(n =>
+      // highlight if any note is a real onset
+      !n.tieStop || (n.tieStart && !n.tieStop)
+    );
+
+    return {
+      timeBeats: o.timeBeats,
+      highlightable: hasNewOnset
+    };
+  });
+}
+
+
 
 // ---------- SVG Mapping ----------
 async function mapXmlNotesToSvg() {
@@ -462,31 +518,50 @@ async function mapXmlNotesToSvg() {
     svg.querySelector(`[id^="${CSS.escape(g.id)}-"]`)
   );
 
-  // --- Group note events by their start time (for chords)
+  // Visual onsets in the same order OSMD prints them
+if (!currentCleanedXML || !currentCleanedXML.includes("<note")) {
+  console.warn("⚠️ No XML available for visual onset mapping");
+  svgNoteMap = [];
+  return;
+}
+
+
+const visualOnsets = extractVisualOnsetsFromXML(currentCleanedXML);
+
+  // Filter out tie-continuation-only noteheads (but keep normal notes!)
+  const highlightableSvg = stemQualified.filter((g, idx) => {
+    const v = visualOnsets[idx];
+    if (!v) return true; // fail-safe
+    return v.highlightable;
+  });
+
+  // Playback onsets (your existing grouping from merged events)
   const playableEvents = noteEvents.filter((e) => e.type === "note");
   const groupedByTime = [];
   playableEvents.forEach((ev) => {
     const existing = groupedByTime.find(
       (g) => Math.abs(g.timeBeats - ev.timeBeats) < 1e-4
     );
-    if (existing) {
-      existing.events.push(ev);
-    } else {
-      groupedByTime.push({ timeBeats: ev.timeBeats, events: [ev] });
-    }
+    if (existing) existing.events.push(ev);
+    else groupedByTime.push({ timeBeats: ev.timeBeats, events: [ev] });
   });
 
-  // Keep groups that correspond to rendered stavenotes
-  const keptGroups = stemQualified.slice(0, groupedByTime.length);
-  svgNoteMap = keptGroups.map((g, i) => ({
-    eventGroup: groupedByTime[i], // holds one or more events
-    group: g,
-  }));
+  svgNoteMap = highlightableSvg
+    .slice(0, groupedByTime.length)
+    .map((g, i) => ({
+      eventGroup: groupedByTime[i],
+      group: g
+    }));
 
   console.log(
-    `🎯 Mapped ${svgNoteMap.length}/${groupedByTime.length} time groups to SVG stavenotes.`
+    `🎯 stemQualified=${stemQualified.length}, visualOnsets=${visualOnsets.length}, highlightableSvg=${highlightableSvg.length}, mapped=${svgNoteMap.length}`
   );
 }
+
+
+
+
+
 
 // ---------- Highlighter ----------
 function highlightNoteSequentialByEvent(eventObj) {
