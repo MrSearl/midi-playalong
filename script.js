@@ -627,24 +627,21 @@ function isSemibreveNotehead(pathD) {
 
 
 // ---------- Highlighter ----------
-function highlightNoteSequentialByEvent(eventObj) {
-  // Clear any previous highlights
-  document.querySelectorAll(".lit").forEach((el) => el.classList.remove("lit"));
-  if (!eventObj) return;
+function highlightNoteSequentialByEvent() {
+  // clear previous highlight
+  document.querySelectorAll(".lit").forEach(el => el.classList.remove("lit"));
 
-  // Find the matching group by its event time
-  const mapItem = svgNoteMap.find(
-    (m) => Math.abs(m.eventGroup.timeBeats - eventObj.timeBeats) < 1e-4
-  );
-
+  const mapItem = svgNoteMap[highlightIdx];
   if (!mapItem) return;
+
   const group = mapItem.group;
   group.classList.add("lit");
 
-  // Light all noteheads and stem in this stavenote
   group
     .querySelectorAll(".vf-notehead, .vf-stem")
-    .forEach((el) => el.classList.add("lit"));
+    .forEach(el => el.classList.add("lit"));
+
+  highlightIdx++;
 }
 
 // ---------- Loop Controls ----------
@@ -705,6 +702,8 @@ function handleMIDI(event) {
 
 // ---------- Playback ----------
 playBtn.addEventListener("click", async () => {
+  highlightIdx = 0;
+
   Tone.Transport.bpm.value = bpm;
   if (Tone.context.state !== "running") await Tone.context.resume();
   await mapXmlNotesToSvg();
@@ -757,7 +756,7 @@ playBtn.addEventListener("click", async () => {
   noteEvents.find(e => e.type === "note")?.timeBeats
 );
 
-      highlightNoteSequentialByEvent(grp.notes[0]);
+highlightNoteSequentialByEvent();
 
       // schedule release without interrupting later same-pitch notes
       Tone.Transport.scheduleOnce(() => {
@@ -798,6 +797,8 @@ playBtn.addEventListener("click", async () => {
 
 // ---------- Stop ----------
 stopBtn.addEventListener("click", () => {
+  highlightIdx = 0;
+
   Tone.Transport.stop();
   Tone.Transport.cancel();
   synthPiano.releaseAll();
