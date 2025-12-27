@@ -25,6 +25,7 @@ const songs = [
   { title: "When The Saints...", path: "./src/assets/saintsmelody.xml" },
   { title: "New World Chords", path: "./src/assets/newworldchords.xml" },
   { title: "The Final Countdown", path: "./src/assets/finalcountdown.xml" },
+  {title: "Any Dream Melody", path: "./src/assets/anydreammelody.xml"}
 ];
 
 // ---------- Variables ----------
@@ -319,6 +320,11 @@ async function loadXMLFile(filePath) {
   keyboard.classList.add("song-loaded");
 
   noteEvents = extractNotesFromXML(cleanedXML);
+
+  console.log(
+  "First playable event time:",
+  noteEvents.find(e => e.type === "note")?.timeBeats
+);
   await mapXmlNotesToSvg();
 
   setupLoopControls();
@@ -355,11 +361,12 @@ function extractNotesFromXML(xmlText) {
     );
 
     // ---------- Rests ----------
-    if (n.querySelector("rest")) {
-      events.push({ type: "rest", timeBeats, durBeats, measure });
-      timeBeats += durBeats;
-      continue;
-    }
+if (n.querySelector("rest")) {
+  // rests advance time ONLY
+  timeBeats += durBeats;
+  continue;
+}
+
 
     const pitchNode = n.querySelector("pitch");
     if (!pitchNode) {
@@ -438,9 +445,12 @@ function extractNotesFromXML(xmlText) {
   return events;
 }
 
+
+
 function extractVisualOnsetsFromXML(xmlText) {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlText, "application/xml");
+
   const divisions = parseFloat(
     xmlDoc.querySelector("divisions")?.textContent || "64"
   );
@@ -457,10 +467,10 @@ function extractVisualOnsetsFromXML(xmlText) {
     const durDiv = parseFloat(n.querySelector("duration")?.textContent || "0");
     const durBeats = durDiv / divisions;
 
-    // rests advance time but still count as visual space
+    // ----- REST -----
     if (n.querySelector("rest")) {
       timeBeats += durBeats;
-      continue;
+      continue; // NO visual onset
     }
 
     const pitchNode = n.querySelector("pitch");
@@ -472,93 +482,145 @@ function extractVisualOnsetsFromXML(xmlText) {
     const tieStart = !!n.querySelector("tie[type='start'], tied[type='start']");
     const tieStop  = !!n.querySelector("tie[type='stop'],  tied[type='stop']");
 
-    const startTime = isChordTone ? lastBaseTime : timeBeats;
-
-    if (!isChordTone) {
-      // New visual onset
-      onsets.push({
-        timeBeats: startTime,
-        notes: [{ tieStart, tieStop }]
-      });
-      lastBaseTime = timeBeats;
-      timeBeats += durBeats;
-    } else {
-      // Chord tone, attach to previous onset
-      const last = onsets[onsets.length - 1];
-      if (last) last.notes.push({ tieStart, tieStop });
+    // ----- CHORD TONE -----
+    if (isChordTone) {
+      // shares previous visual onset
+      continue;
     }
+
+    // ----- REAL VISUAL ONSET -----
+    onsets.push({
+      timeBeats,
+      highlightable: !tieStop
+    });
+
+    lastBaseTime = timeBeats;
+    timeBeats += durBeats;
   }
 
-  // Decide which onsets should be highlighted
-  return onsets.map(o => {
-    const hasNewOnset = o.notes.some(n =>
-      // highlight if any note is a real onset
-      !n.tieStop || (n.tieStart && !n.tieStop)
-    );
-
-    return {
-      timeBeats: o.timeBeats,
-      highlightable: hasNewOnset
-    };
-  });
+  return onsets;
 }
 
 
 
-// ---------- SVG Mapping ----------
 async function mapXmlNotesToSvg() {
   const svg = await waitForSVG();
-  if (!svg) {
-    console.warn("⚠️ No SVG found");
+  if (!svg || !currentCleanedXML) {
     svgNoteMap = [];
     return;
   }
 
-  const allGroups = Array.from(svg.querySelectorAll("g.vf-stavenote[id]"));
-  const stemQualified = allGroups.filter((g) =>
-    svg.querySelector(`[id^="${CSS.escape(g.id)}-"]`)
-  );
+  // ---------- XML truth ----------
+  const visualOnsets = extractVisualOnsetsFromXML(currentCleanedXML);
+  const playableEvents = noteEvents.filter(e => e.type === "note");
 
-  // Visual onsets in the same order OSMD prints them
-if (!currentCleanedXML || !currentCleanedXML.includes("<note")) {
-  console.warn("⚠️ No XML available for visual onset mapping");
-  svgNoteMap = [];
-  return;
-}
+  // ---------- helper: semibreve notehead detection ----------
+  function isSemibreveNotehead(pathD) {
+    if (!pathD) return false;
+    if (pathD.includes("L")) return false;
+    const cCount = (pathD.match(/C/g) || []).length;
+    if (cCount < 6) return false;
+    if (pathD.length < 120) return false;
+    return true;
+  }
 
+  // ---------- Collect real SVG notes (same as your working rest filter) ----------
+  const svgNotes = Array.from(
+    svg.querySelectorAll("g.vf-stavenote[id]")
+  ).filter(g => {
+    if (g.closest(".vf-multirest")) return false;
 
-const visualOnsets = extractVisualOnsetsFromXML(currentCleanedXML);
+    const id = g.id;
 
-  // Filter out tie-continuation-only noteheads (but keep normal notes!)
-  const highlightableSvg = stemQualified.filter((g, idx) => {
-    const v = visualOnsets[idx];
-    if (!v) return true; // fail-safe
-    return v.highlightable;
+    // normal notes (have linked children)
+    if (svg.querySelector(`[id^="${CSS.escape(id)}-"]`)) {
+      return true;
+    }
+
+    // semibreve fallback
+    const noteheadPath = g.querySelector(".vf-notehead path");
+    if (!noteheadPath) return false;
+    if (g.querySelector(".vf-stem")) return false;
+
+    const d = noteheadPath.getAttribute("d") || "";
+    return isSemibreveNotehead(d);
   });
 
-  // Playback onsets (your existing grouping from merged events)
-  const playableEvents = noteEvents.filter((e) => e.type === "note");
-  const groupedByTime = [];
-  playableEvents.forEach((ev) => {
-    const existing = groupedByTime.find(
-      (g) => Math.abs(g.timeBeats - ev.timeBeats) < 1e-4
-    );
-    if (existing) existing.events.push(ev);
-    else groupedByTime.push({ timeBeats: ev.timeBeats, events: [ev] });
-  });
+  // ---------- Detect tie-start from SVG structure ----------
+  // Tie is a sibling with class vf-stavetie and also `${noteId}-tie`
+  function noteStartsTie(svgGroup) {
+    const id = svgGroup?.id;
+    if (!id) return false;
+    const parent = svgGroup.parentElement;
+    if (!parent) return false;
+    // classes are on the same element: vf-stavetie + vf-auto8058-tie
+    return !!parent.querySelector(`.vf-stavetie.${CSS.escape(id)}-tie`);
+  }
 
-  svgNoteMap = highlightableSvg
-    .slice(0, groupedByTime.length)
-    .map((g, i) => ({
-      eventGroup: groupedByTime[i],
-      group: g
-    }));
+  // ---------- Map XML → SVG → playback ----------
+  const mapped = [];
+
+  let svgIdx = 0;
+  let onsetIdx = 0;
+  let eventIdx = 0;
+
+  // when true, the *next* SVG stavenote is the tied continuation and must not be mapped/highlighted
+  let skipNextSvgNote = false;
+
+  while (svgIdx < svgNotes.length && onsetIdx < visualOnsets.length && eventIdx < playableEvents.length) {
+    const onset = visualOnsets[onsetIdx];
+    onsetIdx++;
+
+    // If this onset is "not highlightable" (rests were already removed upstream),
+    // we must still consume SVG notes to stay aligned.
+    if (!onset.highlightable) {
+      // consume ONE SVG stavenote for this onset
+      svgIdx++;
+      continue;
+    }
+
+    // consume the SVG note for this onset
+    const svgGroup = svgNotes[svgIdx];
+    svgIdx++;
+
+    // If the previous mapped note started a tie, this stavenote is the 2nd half, skip it.
+    if (skipNextSvgNote) {
+      skipNextSvgNote = false;
+      continue;
+    }
+
+    // Map this SVG note to the next playable event
+    mapped.push({
+      group: svgGroup,
+      eventGroup: playableEvents[eventIdx]
+    });
+    eventIdx++;
+
+    // If this SVG note starts a tie, skip exactly one following stavenote
+    if (noteStartsTie(svgGroup)) {
+      skipNextSvgNote = true;
+    }
+  }
+
+  svgNoteMap = mapped;
 
   console.log(
-    `🎯 stemQualified=${stemQualified.length}, visualOnsets=${visualOnsets.length}, highlightableSvg=${highlightableSvg.length}, mapped=${svgNoteMap.length}`
+    `🎯 svgNotes=${svgNotes.length}, onsets=${visualOnsets.length}, playable=${playableEvents.length}, mapped=${svgNoteMap.length}`
   );
 }
 
+
+function isSemibreveNotehead(pathD) {
+  if (!pathD) return false;
+
+  const commands = pathD.match(/[A-Za-z]/g) || [];
+
+  return (
+    commands.length <= 6 &&
+    pathD.length < 350 &&
+    !pathD.includes("L")
+  );
+}
 
 
 
@@ -689,6 +751,11 @@ playBtn.addEventListener("click", async () => {
         activeNotes.add(n.midiPitch);
         lightKey(n.midiPitch, "lightblue");
       });
+
+      console.log(
+  "First playable event time:",
+  noteEvents.find(e => e.type === "note")?.timeBeats
+);
 
       highlightNoteSequentialByEvent(grp.notes[0]);
 
