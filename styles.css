@@ -533,3 +533,46 @@ width:150px;
 .hidden {
   display: none !important;
 }
+
+
+input[type="number"] {
+  width: 4.5em;
+}
+
+.loop-controls {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.loop-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loop-group label {
+  font-size: 16px;
+  font-weight: 400;
+  color: #222;
+  white-space: nowrap;
+}
+
+.loop-group input[type="number"] {
+  width: 64px;
+  padding: 6px 8px;
+  font-size: 14px;
+  text-align: center;
+
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+
+/* Optional: nicer focus state */
+.loop-group input[type="number"]:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.15);
+}
+

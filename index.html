@@ -86,13 +86,21 @@
 <div class="bottom-controls">  <button id="playBtn" class="control-btn">▶ Play</button>
   <button id="stopBtn" class="control-btn">⏹ Stop</button>
   <button id="loopBtn" class="control-btn loop-off">🔁 Loop</button>
-  <select id="loopStart">
-    <option value="" disabled selected>Starting Bar</option>
-  </select>
+ <div class="loop-controls">
+<div class="loop-controls">
+  <div class="loop-group">
+    <label for="loopStart">Start bar</label>
+    <input id="loopStart" type="number" value="1" />
+  </div>
 
-  <select id="loopEnd">
-    <option value="" disabled selected>To End Of</option>
-  </select>
+  <div class="loop-group">
+    <label for="loopEnd">End bar</label>
+    <input id="loopEnd" type="number" value="1" />
+  </div>
+</div>
+
+
+
 
 </div>
 

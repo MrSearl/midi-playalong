@@ -11,9 +11,13 @@ const musicDiv = document.getElementById("music");
 const keyboard = document.getElementById("keyboard");
 const pianoSlider = document.getElementById("pianoVol");
 const guitarSlider = document.getElementById("guitarVol");
-const startSel = document.getElementById("loopStart");
-const endSel = document.getElementById("loopEnd");
+
 const loopBtn = document.getElementById("loopBtn");
+const startSel = document.getElementById("loopStart");
+const endSel   = document.getElementById("loopEnd");
+
+
+
 
 // ---------- Song List ----------
 // You can easily update this list later (add/remove songs)
@@ -329,6 +333,9 @@ async function loadXMLFile(filePath) {
 
   setupLoopControls();
   setupTempoSelect(bpm);
+
+  loopStartBar = 1;
+
 }
 
 
@@ -524,6 +531,13 @@ async function mapXmlNotesToSvg() {
     return true;
   }
 
+  function getHighlightStartIndex(loopStartBar) {
+  return svgNoteMap.findIndex(
+    m => m.eventGroup.measure >= loopStartBar
+  );
+}
+
+
   // ---------- Collect real SVG notes (same as your working rest filter) ----------
   const svgNotes = Array.from(
     svg.querySelectorAll("g.vf-stavenote[id]")
@@ -646,33 +660,46 @@ function highlightNoteSequentialByEvent() {
 
 // ---------- Loop Controls ----------
 function setupLoopControls() {
-  if (!osmd) return;
+  if (!osmd || !startSel || !endSel) return;
+
   const measureCount =
     osmd?.GraphicalMusicSheet?.measureList?.flat()?.length ||
     osmd?.GraphicSheet?.MeasureList?.flat()?.length ||
     0;
 
-  startSel.innerHTML = '<option value="" disabled selected>Start</option>';
-  endSel.innerHTML = '<option value="" disabled selected>To End Of</option>';
-
-  for (let i = 1; i <= measureCount; i++) {
-    startSel.add(new Option(i, i));
-    endSel.add(new Option(i, i));
-  }
-
+  // reset defaults on song load
+  loopStartBar = 1;
   loopEndBar = measureCount;
-  endSel.value = measureCount;
+
+  // configure constraints
+  startSel.min = 1;
+  startSel.max = measureCount;
   startSel.value = loopStartBar;
 
-  startSel.addEventListener(
-    "change",
-    (e) => (loopStartBar = parseInt(e.target.value))
-  );
-  endSel.addEventListener(
-    "change",
-    (e) => (loopEndBar = parseInt(e.target.value))
-  );
+  endSel.min = 1;
+  endSel.max = measureCount;
+  endSel.value = loopEndBar;
+
+  startSel.oninput = () => {
+    loopStartBar = Math.max(1, Math.min(+startSel.value || 1, loopEndBar));
+    startSel.value = loopStartBar;
+  };
+
+  endSel.oninput = () => {
+    loopEndBar = Math.min(
+      measureCount,
+      Math.max(+endSel.value || loopStartBar, loopStartBar)
+    );
+    endSel.value = loopEndBar;
+  };
 }
+
+
+function updateLoopLabels() {
+  startLabel.textContent = loopStartBar;
+  endLabel.textContent = loopEndBar;
+}
+
 
 // ---------- MIDI ----------
 async function connectMIDIKeyboard() {
@@ -700,13 +727,22 @@ function handleMIDI(event) {
   }
 }
 
+  function getHighlightStartIndex(loopStartBar) {
+  return svgNoteMap.findIndex(
+    m => m.eventGroup.measure >= loopStartBar
+  );
+}
+
 // ---------- Playback ----------
 playBtn.addEventListener("click", async () => {
-  highlightIdx = 0;
-
   Tone.Transport.bpm.value = bpm;
   if (Tone.context.state !== "running") await Tone.context.resume();
+
   await mapXmlNotesToSvg();
+
+  highlightIdx = getHighlightStartIndex(loopStartBar);
+  if (highlightIdx < 0) highlightIdx = 0;
+
   Tone.Transport.stop();
   Tone.Transport.cancel();
 
