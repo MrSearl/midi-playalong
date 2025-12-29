@@ -22,14 +22,21 @@ const endSel   = document.getElementById("loopEnd");
 // ---------- Song List ----------
 // You can easily update this list later (add/remove songs)
 const songs = [
-  { title: "Get Lucky Verse", path: "./src/assets/getluckyverse.xml" },
+  { title: "When The Saints...", path: "./src/assets/saintsmelody.xml" },
+  { title: "New World Melody", path: "./src/assets/newworldmelody.xml" },
+  { title: "New World Chords", path: "./src/assets/newworldchords.xml" },
+  { title: "New World Extension 1", path: "./src/assets/newworldex1.xml" },
+  { title: "New World Extension 2", path: "./src/assets/newworldex2.xml" },
+   {title: "My Girl Melody", path: "./src/assets/mygirlmelody.xml"},
+   {title: "My Girl Chords", path: "./src/assets/mygirlchords.xml"},
 
+  {title: "Any Dream Melody", path: "./src/assets/anydreammelody.xml"},
+   {title: "Any Dream Chords", path: "./src/assets/anydreamchords.xml"},
+
+  { title: "Get Lucky Verse", path: "./src/assets/getluckyverse.xml" },
   { title: "Get Lucky Chorus", path: "./src/assets/getluckychorus.xml" },
   { title: "Three Little Birds", path: "./src/assets/threelittlebirds.xml" },
-  { title: "When The Saints...", path: "./src/assets/saintsmelody.xml" },
-  { title: "New World Chords", path: "./src/assets/newworldchords.xml" },
-  { title: "The Final Countdown", path: "./src/assets/finalcountdown.xml" },
-  {title: "Any Dream Melody", path: "./src/assets/anydreammelody.xml"}
+  { title: "The Final Countdown", path: "./src/assets/finalcountdown.xml" }
 ];
 
 // ---------- Variables ----------
@@ -319,6 +326,7 @@ async function loadXMLFile(filePath) {
 
   await osmd.load(cleanedXML);
   await osmd.render();
+  
 
   musicDiv.classList.remove("hidden");
   keyboard.classList.add("song-loaded");
@@ -330,6 +338,7 @@ async function loadXMLFile(filePath) {
   noteEvents.find(e => e.type === "note")?.timeBeats
 );
   await mapXmlNotesToSvg();
+
 
   setupLoopControls();
   setupTempoSelect(bpm);
@@ -635,6 +644,8 @@ function isSemibreveNotehead(pathD) {
     !pathD.includes("L")
   );
 }
+
+
 
 
 
