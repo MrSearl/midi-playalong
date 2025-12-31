@@ -32,6 +32,8 @@ const songs = [
 
   {title: "Any Dream Melody", path: "./src/assets/anydreammelody.xml"},
    {title: "Any Dream Chords", path: "./src/assets/anydreamchords.xml"},
+   {title:"X Files Ostinato", path: "./src/assets/xfilesostinato.xml"},
+   {title:"X Files Melody", path: "./src/assets/xfilesmelody.xml"},
 
   { title: "Get Lucky Verse", path: "./src/assets/getluckyverse.xml" },
   { title: "Get Lucky Chorus", path: "./src/assets/getluckychorus.xml" },
