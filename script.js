@@ -326,14 +326,18 @@ async function loadXMLFile(filePath) {
     });
   }
 
-  await osmd.load(cleanedXML);
-  await osmd.render();
-  
+// Show the notation area FIRST
+musicDiv.classList.remove("hidden");
+keyboard.classList.add("song-loaded");
 
-  musicDiv.classList.remove("hidden");
-  keyboard.classList.add("song-loaded");
+// Give the browser a moment to calculate its size
+await new Promise(resolve => requestAnimationFrame(resolve));
 
-  noteEvents = extractNotesFromXML(cleanedXML);
+// Now render OSMD
+osmd.load(cleanedXML);
+osmd.render();
+
+noteEvents = extractNotesFromXML(cleanedXML);
 
   console.log(
   "First playable event time:",
