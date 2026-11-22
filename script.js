@@ -13,6 +13,8 @@ const pianoSlider = document.getElementById("pianoVol");
 const guitarSlider = document.getElementById("guitarVol");
 
 const loopBtn = document.getElementById("loopBtn");
+const metronomeBtn = document.getElementById("metronomeBtn");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
 const startSel = document.getElementById("loopStart");
 const endSel   = document.getElementById("loopEnd");
 
@@ -52,7 +54,12 @@ let audioReady = false;
 let currentIndex = 0;
 let loopStartBar = 1;
 let loopEndBar = 4;
-let lastLitKey = null;
+const userHeldNotes = new Set();
+const playbackHeldNotes = new Set();
+let metronomeEnabled = false;
+let metronomeSynth;
+let metronomeEventId = null;
+let songPlaybackActive = false;
 let loopEnabled = false;
 let currentCleanedXML = "";
 
@@ -164,24 +171,24 @@ function keyDivFor(midi) {
   return keyboard.querySelector(`[data-midi="${midi}"]`);
 }
 
-function lightKey(midi, color = "#9df") {
+// User input takes priority when the same note is played by both sources.
+function refreshKey(midi) {
   const key = keyDivFor(midi);
   if (!key) return;
-
-  // Turn off previous key highlight (even if same note)
-  if (lastLitKey) lastLitKey.style.backgroundColor = "";
-
-  // Short delay before lighting to create a visible gap
-  setTimeout(() => {
-    key.style.backgroundColor = color;
-    lastLitKey = key;
-  }, 50); // 50 ms delay creates a subtle re-flash
+  key.style.backgroundColor = userHeldNotes.has(midi)
+    ? "#f59e0b" : playbackHeldNotes.has(midi) ? "#70b8ff" : "";
 }
-
-function unlightKey(midi) {
-  const key = keyDivFor(midi);
-  if (key) key.style.backgroundColor = "";
-  if (lastLitKey === key) lastLitKey = null;
+function lightKey(midi, source = "playback") {
+  (source === "user" ? userHeldNotes : playbackHeldNotes).add(midi);
+  refreshKey(midi);
+}
+function unlightKey(midi, source = "playback") {
+  (source === "user" ? userHeldNotes : playbackHeldNotes).delete(midi);
+  refreshKey(midi);
+}
+function clearPlaybackKeys() {
+  playbackHeldNotes.clear();
+  keyboard.querySelectorAll("[data-midi]").forEach(key => refreshKey(Number(key.dataset.midi)));
 }
 
 // ---------- Instruments ----------
@@ -737,10 +744,10 @@ function handleMIDI(event) {
 
   if (isNoteOn) {
     synthPiano.triggerAttack(freq);
-    lightKey(note, "lightblue");
+    lightKey(note, "user");
   } else if (isNoteOff) {
     synthPiano.triggerRelease(freq);
-    unlightKey(note);
+    unlightKey(note, "user");
   }
 }
 
@@ -762,12 +769,18 @@ playBtn.addEventListener("click", async () => {
 
   Tone.Transport.stop();
   Tone.Transport.cancel();
+  clearPlaybackKeys();
+  scheduleMetronome();
 
   const selectedEvents = noteEvents.filter(
     (ev) => ev.measure >= loopStartBar && ev.measure <= loopEndBar
   );
   const playableEvents = selectedEvents.filter((ev) => ev.type === "note");
-  if (!playableEvents.length) return;
+  if (!playableEvents.length) {
+    if (metronomeEnabled) Tone.Transport.start("+0.05");
+    return;
+  }
+  songPlaybackActive = true;
 
   const secPerBeat = 60 / bpm;
   const offset = playableEvents[0].timeBeats;
@@ -801,7 +814,7 @@ playBtn.addEventListener("click", async () => {
         const freq = Tone.Frequency(n.midiPitch, "midi").toFrequency();
         guitar.triggerAttack(freq, time);
         activeNotes.add(n.midiPitch);
-        lightKey(n.midiPitch, "lightblue");
+        lightKey(n.midiPitch, "playback");
       });
 
       console.log(
@@ -818,7 +831,7 @@ highlightNoteSequentialByEvent();
           if (activeNotes.has(n.midiPitch)) {
             const freq = Tone.Frequency(n.midiPitch, "midi").toFrequency();
             guitar.triggerRelease(freq);
-            unlightKey(n.midiPitch);
+            unlightKey(n.midiPitch, "playback");
             activeNotes.delete(n.midiPitch);
           }
         });
@@ -838,9 +851,10 @@ highlightNoteSequentialByEvent();
       Tone.Transport.cancel();
       highlightNoteSequentialByEvent(null);
       activeNotes.clear();
-      document
-        .querySelectorAll(".white-key, .black-key")
-        .forEach((k) => (k.style.backgroundColor = ""));
+      clearPlaybackKeys();
+      songPlaybackActive = false;
+      playBtn.classList.remove("playing");
+      if (metronomeEnabled) Tone.Transport.start("+0.05");
     }, totalDurSec + 0.2);
   }
 
@@ -854,7 +868,11 @@ stopBtn.addEventListener("click", () => {
 
   Tone.Transport.stop();
   Tone.Transport.cancel();
-  synthPiano.releaseAll();
+  guitar.releaseAll();
+  clearPlaybackKeys();
+  songPlaybackActive = false;
+  scheduleMetronome();
+  if (metronomeEnabled) Tone.Transport.start("+0.05");
   highlightNoteSequentialByEvent(null);
   // status.innerText = "⏹ Stopped.";
   playBtn.classList.remove("playing");
@@ -949,6 +967,52 @@ function setupSongSelect() {
 //     if (stem) stem.classList.add("lit");
 //   });
 // }
+
+// ---------- Metronome ----------
+function scheduleMetronome() {
+  if (metronomeEventId !== null) {
+    Tone.Transport.clear(metronomeEventId);
+    metronomeEventId = null;
+  }
+  if (!metronomeEnabled) return;
+  if (!metronomeSynth) {
+    metronomeSynth = new Tone.Synth({
+      oscillator: { type: "sine" },
+      envelope: { attack: 0.001, decay: 0.045, sustain: 0, release: 0.025 },
+      volume: -17
+    }).toDestination();
+  }
+  metronomeEventId = Tone.Transport.scheduleRepeat(time => {
+    metronomeSynth.triggerAttackRelease("C6", "32n", time);
+  }, "4n");
+}
+metronomeBtn.addEventListener("click", async () => {
+  await Tone.start();
+  metronomeEnabled = !metronomeEnabled;
+  metronomeBtn.textContent = metronomeEnabled ? "♩ Metronome On" : "♩ Metronome Off";
+  metronomeBtn.setAttribute("aria-pressed", String(metronomeEnabled));
+  metronomeBtn.classList.toggle("metronome-on", metronomeEnabled);
+  scheduleMetronome();
+  if (metronomeEnabled && Tone.Transport.state !== "started") Tone.Transport.start("+0.05");
+  if (!metronomeEnabled && !songPlaybackActive) Tone.Transport.stop();
+});
+
+// ---------- Fullscreen classroom keyboard ----------
+function updateFullscreenMode() {
+  const active = Boolean(document.fullscreenElement);
+  document.body.classList.toggle("keyboard-fullscreen", active);
+  fullscreenBtn.textContent = active ? "⛶ Exit Fullscreen" : "⛶ Fullscreen Keyboard";
+  fullscreenBtn.setAttribute("aria-pressed", String(active));
+}
+fullscreenBtn.addEventListener("click", async () => {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  } catch (err) {
+    console.warn("Fullscreen unavailable:", err);
+  }
+});
+document.addEventListener("fullscreenchange", updateFullscreenMode);
 
 // ---------- Go ----------
 init();
