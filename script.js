@@ -1,4 +1,4 @@
-console.log("%cMr Searl MIDI Playalong | Version 2026-11-23.2 | Semibreve highlighting fix", "color: #1677ff; font-weight: bold; font-size: 14px;");
+console.log("%cMr Searl MIDI Playalong | Version 2026-11-23.3 | Rest exclusion fix", "color: #1677ff; font-weight: bold; font-size: 14px;");
 // ---------- Globals ----------
 const Tone = window.Tone;
 const OpenSheetMusicDisplay =
@@ -566,7 +566,12 @@ async function mapXmlNotesToSvg() {
   const svgNotes = Array.from(
     svg.querySelectorAll("g.vf-stavenote[id]")
   ).filter(g => {
-    if (g.closest(".vf-multirest")) return false;
+    // Rests are also rendered as vf-stavenote groups by VexFlow.
+    // Reject them BEFORE the linked-ID test, otherwise they can be
+    // mistaken for pitched notes and shift every subsequent highlight.
+    if (g.closest(".vf-multirest") ||
+        g.matches(".vf-rest, .vf-staverest, [class*='rest']") ||
+        g.querySelector(".vf-rest, .vf-staverest, [class*='rest']")) return false;
 
     const id = g.id;
 
