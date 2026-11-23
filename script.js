@@ -1,4 +1,4 @@
-console.log("%cMr Searl MIDI Playalong | Version 2026-11-23.3 | Rest exclusion fix", "color: #1677ff; font-weight: bold; font-size: 14px;");
+console.log("%cMr Searl MIDI Playalong | Version 2026-11-23.4 | Rest shape filtering", "color: #1677ff; font-weight: bold; font-size: 14px;");
 // ---------- Globals ----------
 const Tone = window.Tone;
 const OpenSheetMusicDisplay =
@@ -573,18 +573,25 @@ async function mapXmlNotesToSvg() {
         g.matches(".vf-rest, .vf-staverest, [class*='rest']") ||
         g.querySelector(".vf-rest, .vf-staverest, [class*='rest']")) return false;
 
-    const id = g.id;
+    const notehead = g.querySelector(".vf-notehead");
+    if (!notehead) return false;
 
-    // normal notes (have linked children)
-    if (svg.querySelector(`[id^="${CSS.escape(id)}-"]`)) {
-      return true;
+    // VexFlow renders rests as noteheads too, often with linked IDs.
+    // My Girl confirms two distinct rest shapes: a flat 12.5 x 4.9
+    // rectangle and a narrow 8.4 x 28.5 glyph. Exclude these BEFORE
+    // accepting normal linked notes or stemless semibreves.
+    if (!g.querySelector(".vf-stem")) {
+      const bounds = notehead.getBBox();
+      if (!bounds.width || !bounds.height) return false;
+      const aspect = bounds.width / bounds.height;
+      if (aspect > 2.2 || aspect < 0.45) return false;
     }
 
-    // Stemless semibreves do not always have the extra linked SVG IDs.
-    // Identify them by their notehead and absence of a stem instead of
-    // relying on the VexFlow path shape (which varies between versions).
-    if (g.querySelector(".vf-rest") || g.classList.contains("vf-rest")) return false;
-    return !!g.querySelector(".vf-notehead") && !g.querySelector(".vf-stem");
+    const id = g.id;
+    if (svg.querySelector(`[id^="${CSS.escape(id)}-"]`)) return true;
+
+    // Semibreves can lack linked SVG IDs and stems.
+    return !g.querySelector(".vf-stem");
   });
 
   // ---------- Detect tie-start from SVG structure ----------
