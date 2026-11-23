@@ -1,4 +1,4 @@
-console.log("%cMr Searl MIDI Playalong | Version 2026-11-23.4 | Rest shape filtering", "color: #1677ff; font-weight: bold; font-size: 14px;");
+console.log("%cMr Searl MIDI Playalong | Version 2026-11-23.5 | Fullscreen viewport centring", "color: #1677ff; font-weight: bold; font-size: 14px;");
 // ---------- Globals ----------
 const Tone = window.Tone;
 const OpenSheetMusicDisplay =
