@@ -982,15 +982,16 @@ function scheduleMetronome() {
       volume: -17
     }).toDestination();
   }
-  // Four-beat pattern: accented downbeat, then three quieter clicks.
-  let beatInBar = 0;
+  // Anchor the click to the transport's beat grid, not to when
+  // the metronome button was pressed. This keeps beat 1 in sync.
   metronomeEventId = Tone.Transport.scheduleRepeat(time => {
+    const ticks = Tone.Transport.getTicksAtTime(time);
+    const beatInBar = Math.round(ticks / Tone.Transport.PPQ) % 4;
     const downbeat = beatInBar === 0;
     metronomeSynth.triggerAttackRelease(
       downbeat ? "E6" : "C6", "32n", time, downbeat ? 0.95 : 0.55
     );
-    beatInBar = (beatInBar + 1) % 4;
-  }, "4n");
+  }, "4n", 0);
 }
 metronomeBtn.addEventListener("click", async () => {
   await Tone.start();
