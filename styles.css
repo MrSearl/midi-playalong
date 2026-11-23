@@ -654,3 +654,17 @@ body:not(.keyboard-fullscreen) .loop-controls {
   justify-content: center;
   flex-wrap: wrap;
 }
+
+/* Centre the entire piano in fullscreen, without stretching individual keys. */
+body.keyboard-fullscreen .notation-keyboard {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body.keyboard-fullscreen #keyboard {
+  margin-inline: auto;
+  box-sizing: border-box;
+  justify-content: center;
+}
