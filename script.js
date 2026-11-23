@@ -1,4 +1,4 @@
-console.log("%cMr Searl MIDI Playalong | Version 2026-11-23.1 | Metronome sync update", "color: #1677ff; font-weight: bold; font-size: 14px;");
+console.log("%cMr Searl MIDI Playalong | Version 2026-11-23.2 | Semibreve highlighting fix", "color: #1677ff; font-weight: bold; font-size: 14px;");
 // ---------- Globals ----------
 const Tone = window.Tone;
 const OpenSheetMusicDisplay =
@@ -575,13 +575,11 @@ async function mapXmlNotesToSvg() {
       return true;
     }
 
-    // semibreve fallback
-    const noteheadPath = g.querySelector(".vf-notehead path");
-    if (!noteheadPath) return false;
-    if (g.querySelector(".vf-stem")) return false;
-
-    const d = noteheadPath.getAttribute("d") || "";
-    return isSemibreveNotehead(d);
+    // Stemless semibreves do not always have the extra linked SVG IDs.
+    // Identify them by their notehead and absence of a stem instead of
+    // relying on the VexFlow path shape (which varies between versions).
+    if (g.querySelector(".vf-rest") || g.classList.contains("vf-rest")) return false;
+    return !!g.querySelector(".vf-notehead") && !g.querySelector(".vf-stem");
   });
 
   // ---------- Detect tie-start from SVG structure ----------
