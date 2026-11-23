@@ -1007,7 +1007,7 @@ metronomeBtn.addEventListener("click", async () => {
 function resizeFullscreenKeyboard() {
   if (!document.fullscreenElement) return;
   // Preserve the original 40px white / 24px black key geometry.
-  const naturalWidth = keyboard.scrollWidth || 950;
+  const naturalWidth = keyboard.querySelectorAll('.key-group').length * 42 + 12;
   const scale = Math.min(1.85, (window.innerWidth - 64) / naturalWidth, (window.innerHeight - 170) / 210);
   keyboard.style.setProperty("--keyboard-scale", String(Math.max(0.65, scale)));
 }
