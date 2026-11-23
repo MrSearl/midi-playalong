@@ -982,8 +982,14 @@ function scheduleMetronome() {
       volume: -17
     }).toDestination();
   }
+  // Four-beat pattern: accented downbeat, then three quieter clicks.
+  let beatInBar = 0;
   metronomeEventId = Tone.Transport.scheduleRepeat(time => {
-    metronomeSynth.triggerAttackRelease("C6", "32n", time);
+    const downbeat = beatInBar === 0;
+    metronomeSynth.triggerAttackRelease(
+      downbeat ? "E6" : "C6", "32n", time, downbeat ? 0.95 : 0.55
+    );
+    beatInBar = (beatInBar + 1) % 4;
   }, "4n");
 }
 metronomeBtn.addEventListener("click", async () => {
@@ -998,9 +1004,19 @@ metronomeBtn.addEventListener("click", async () => {
 });
 
 // ---------- Fullscreen classroom keyboard ----------
+function resizeFullscreenKeyboard() {
+  if (!document.fullscreenElement) return;
+  // Preserve the original 40px white / 24px black key geometry.
+  const naturalWidth = keyboard.scrollWidth || 950;
+  const scale = Math.min(1.85, (window.innerWidth - 64) / naturalWidth, (window.innerHeight - 170) / 210);
+  keyboard.style.setProperty("--keyboard-scale", String(Math.max(0.65, scale)));
+}
+window.addEventListener("resize", resizeFullscreenKeyboard);
 function updateFullscreenMode() {
   const active = Boolean(document.fullscreenElement);
   document.body.classList.toggle("keyboard-fullscreen", active);
+  if (active) requestAnimationFrame(resizeFullscreenKeyboard);
+  else keyboard.style.removeProperty("--keyboard-scale");
   fullscreenBtn.textContent = active ? "⛶ Exit Fullscreen" : "⛶ Fullscreen Keyboard";
   fullscreenBtn.setAttribute("aria-pressed", String(active));
 }
