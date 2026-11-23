@@ -60,6 +60,7 @@ let metronomeEnabled = false;
 let metronomeSynth;
 let metronomeEventId = null;
 let songPlaybackActive = false;
+let metronomeBeatOffset = 0;
 let loopEnabled = false;
 let currentCleanedXML = "";
 
@@ -770,7 +771,6 @@ playBtn.addEventListener("click", async () => {
   Tone.Transport.stop();
   Tone.Transport.cancel();
   clearPlaybackKeys();
-  scheduleMetronome();
 
   const selectedEvents = noteEvents.filter(
     (ev) => ev.measure >= loopStartBar && ev.measure <= loopEndBar
@@ -784,6 +784,10 @@ playBtn.addEventListener("click", async () => {
 
   const secPerBeat = 60 / bpm;
   const offset = playableEvents[0].timeBeats;
+  // Playback starts at the first note, which may not be beat 1.
+  // Keep the metronome's bar accent aligned with the MusicXML timeline.
+  metronomeBeatOffset = ((Math.round(offset) % 4) + 4) % 4;
+  scheduleMetronome();
 
   // ---- Group notes by their onset time (for chords) ----
   const groupedByTime = [];
@@ -853,6 +857,8 @@ highlightNoteSequentialByEvent();
       activeNotes.clear();
       clearPlaybackKeys();
       songPlaybackActive = false;
+      metronomeBeatOffset = 0;
+      scheduleMetronome();
       playBtn.classList.remove("playing");
       if (metronomeEnabled) Tone.Transport.start("+0.05");
     }, totalDurSec + 0.2);
@@ -871,6 +877,7 @@ stopBtn.addEventListener("click", () => {
   guitar.releaseAll();
   clearPlaybackKeys();
   songPlaybackActive = false;
+  metronomeBeatOffset = 0;
   scheduleMetronome();
   if (metronomeEnabled) Tone.Transport.start("+0.05");
   highlightNoteSequentialByEvent(null);
@@ -986,7 +993,7 @@ function scheduleMetronome() {
   // the metronome button was pressed. This keeps beat 1 in sync.
   metronomeEventId = Tone.Transport.scheduleRepeat(time => {
     const ticks = Tone.Transport.getTicksAtTime(time);
-    const beatInBar = Math.round(ticks / Tone.Transport.PPQ) % 4;
+    const beatInBar = (Math.round(ticks / Tone.Transport.PPQ) + metronomeBeatOffset) % 4;
     const downbeat = beatInBar === 0;
     metronomeSynth.triggerAttackRelease(
       downbeat ? "E6" : "C6", "32n", time, downbeat ? 0.95 : 0.55
